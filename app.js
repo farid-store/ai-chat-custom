@@ -2,7 +2,7 @@
 // Ganti nilai ini dengan API Key Gemini Anda.
 // PENTING: Karena ini adalah frontend JS, kunci ini terekspos. 
 // Untuk keamanan, gunakan fungsi serverless.
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
+const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
 
 // --- 1. DATA HISTORIS XAU/USD ---
 const rawData = [
