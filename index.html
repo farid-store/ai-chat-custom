@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD Seasonality Heatmap & AI News Terminal</title>
+    <title>XAU/USD Seasonality Heatmap & AI Local Data Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -159,7 +159,7 @@
     <header class="header-section text-center">
         <div class="container">
             <h1 class="fw-bold">XAU/USD Seasonality Heatmap & Price Analysis</h1>
-            <p class="lead">Dashboard Analisis Emas | Menggunakan Data Historis Statis (2020–2025) & **AI Real-time**</p>
+            <p class="lead">Dashboard Analisis Emas | Menggunakan Data Historis Statis (2020–2025) & **AI Lokal (Gemini)**</p>
         </div>
     </header>
 
@@ -213,22 +213,22 @@
         
         
         <div class="content-card mt-4">
-            <h2 class="gold-title"><i class="fas fa-microchip"></i> AI News Search Terminal (Gemini + NewsAPI)</h2>
-            <p class="text-muted">Masukkan topik atau pertanyaan tentang Emas (XAU/USD). AI akan mencari berita terbaru di **News API** dan memberikan ringkasan analisis berdasarkan data tersebut menggunakan **Gemini API**.</p>
+            <h2 class="gold-title"><i class="fas fa-microchip"></i> AI Data Terminal (Hanya Gemini)</h2>
+            <p class="text-muted">Masukkan pertanyaan tentang data historis XAU/USD (2020-2025) yang tersedia di dashboard. AI akan menganalisis data statis tersebut.</p>
             
             <div class="input-group mb-3">
-                <input type="text" class="form-control ai-terminal-input" id="newsQuery" placeholder="Contoh: Bagaimana prospek harga emas minggu ini? Apa dampak kenaikan suku bunga?">
+                <input type="text" class="form-control ai-terminal-input" id="newsQuery" placeholder="Contoh: Kapan kenaikan terbesar terjadi? Analisis tren kuartal 1 2024.">
                 <button class="btn btn-outline-warning" type="button" id="searchNewsBtn" disabled>
-                    <i class="fas fa-satellite-dish"></i> Search & Analyze
+                    <i class="fas fa-search"></i> Analisis Data Statis
                 </button>
             </div>
             
             <div class="alert alert-info ai-status-alert" id="searchStatus" style="display: none;">
-                <i class="fas fa-spinner fa-spin"></i> **[STATUS]** Mengambil berita dari News API...
+                <i class="fas fa-spinner fa-spin"></i> **[STATUS]** Mengirim data ke Google Gemini untuk dianalisis...
             </div>
             
             <div class="mt-3">
-                <pre id="newsResult" class="ai-terminal-pre">[CONSOLE] Hasil pencarian berita (dari News API) dan analisis AI (dari Gemini) akan muncul di sini. Pastikan API Key sudah dimasukkan.</pre>
+                <pre id="newsResult" class="ai-terminal-pre">[CONSOLE] Analisis AI berdasarkan data historis (heatmap) akan muncul di sini. Pastikan Gemini API Key sudah dimasukkan.</pre>
             </div>
         </div>
         
@@ -323,18 +323,14 @@
     // GANTI DENGAN KUNCI API ANDA YANG SEBENARNYA!
     // ******************************************************************
     const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
-    const NEWS_API_KEY = "164d7ed025e74398bb933e62651bf164"; 
     
-    // Inisialisasi Klien Gemini
-    // KODE BARU (Lebih Aman)
-const model = 'gemini-2.5-flash'; 
-// Inisialisasi 'ai' akan dilakukan di dalam fungsi searchNewsAndAnalyze
+    // Inisialisasi Klien Gemini akan dilakukan di dalam fungsi (lebih aman)
+    const model = 'gemini-2.5-flash';
 
     // ******************************************************************
-    // ** DATASET LOKAL (Digunakan untuk Heatmap, BarChart, LineChart) **
+    // ** DATASET LOKAL (Digunakan untuk Heatmap, BarChart, LineChart & AI) **
     // ******************************************************************
     
-    // Logika data historis XAU/USD (Tidak diubah dari permintaan sebelumnya)
     const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
     const rawData = [
@@ -700,95 +696,63 @@ const model = 'gemini-2.5-flash';
     }
 
     // **************************************************
-    // ** LOGIKA INTEGRASI API GEMINI & NEWS API (BARU) **
+    // ** LOGIKA ANALISIS GEMINI DENGAN DATA LOKAL (BARU) **
     // **************************************************
 
-    async function searchNewsAndAnalyze(query) {
-        if (!NEWS_API_KEY || NEWS_API_KEY === "YOUR_NEWS_API_KEY_HERE") {
-            return "[ERROR] NEWS_API_KEY belum diisi. Silakan ganti placeholder dengan kunci API Anda di bagian <script>.";
-        }
-        
-        // 1. Ambil Berita dari News API
-        let newsData = [];
-        const newsQuery = encodeURIComponent(query + ' AND gold OR XAU/USD OR metal');
-        // Pencarian 3 hari terakhir
-        const date = new Date();
-        date.setDate(date.getDate() - 3); 
-        const fromDate = date.toISOString().split('T')[0]; 
-        
-        const newsUrl = `https://newsapi.org/v2/everything?q=${newsQuery}&apiKey=${NEWS_API_KEY}&language=en&sortBy=publishedAt&pageSize=10&from=${fromDate}`;
-
-        try {
-            const newsResponse = await fetch(newsUrl);
-            const data = await newsResponse.json();
-
-            if (data.status !== 'ok') {
-                return `[ERROR NEWS API] Gagal mengambil berita: ${data.code || data.message}`;
-            }
-
-            newsData = data.articles;
-
-            if (newsData.length === 0) {
-                 return `[CONSOLE] Tidak ditemukan berita terbaru terkait "${query}" dan Emas dalam 3 hari terakhir. Coba kueri lain.`;
-            }
-
-        } catch (error) {
-            console.error('Error fetching news:', error);
-            return `[FATAL ERROR] Gagal koneksi ke News API: ${error.message}. Cek koneksi internet atau kunci API NewsAPI.`;
-        }
-        
-        // 2. Format Berita untuk Gemini
-        let newsPrompt = `[PENGANTAR: Anda adalah analis pasar Emas. Tugas Anda adalah menganalisis berita-berita di bawah ini untuk mengidentifikasi sentimen pasar (Bullish, Bearish, atau Netral) dan prospek harga XAU/USD (Emas) dalam 3 hari ke depan berdasarkan kueri pengguna. Analisis harus profesional, ringkas, dan fokus pada dampak fundamental.]\n\n`;
-        newsPrompt += `Kueri Pengguna: ${query}\n\n`;
-        newsPrompt += `DATA BERITA MINGGU INI (Judul, Sumber, Deskripsi, Link):\n\n`;
-
-        // Ambil maksimal 5 artikel teratas untuk dianalisis
-        newsData.slice(0, 5).forEach((article, index) => {
-            newsPrompt += `--- Artikel ${index + 1} ---\n`;
-            newsPrompt += `Judul: ${article.title}\n`;
-            newsPrompt += `Sumber: ${article.source.name} | Tanggal: ${new Date(article.publishedAt).toLocaleDateString()}\n`;
-            newsPrompt += `Deskripsi: ${article.description ? article.description.substring(0, 150) + '...' : 'N/A'}\n`;
-            newsPrompt += `Link: ${article.url}\n\n`;
+    function formatDataForGemini() {
+        let formatted = "Tabel Data Historis XAU/USD (Bulan, Trend, Deskripsi, Faktor):\n\n";
+        rawData.forEach(item => {
+            formatted += `- ${item.monthYear}: Trend **${item.trend}**. Deskripsi: ${item.desc}. Faktor Pemicu: ${item.factor}.\n`;
         });
-        
-        newsPrompt += `--- ANALISIS HARGA ---
-        1. Ringkas 3 faktor utama dari berita di atas yang paling mempengaruhi harga Emas.
-        2. Tentukan Sentimen Global: Bullish, Bearish, atau Netral.
-        3. Berikan Prospek Harga Emas (XAU/USD) untuk 3 hari ke depan (misal: "Potensi konsolidasi di $2000-$2020", atau "Target naik ke $2050").`;
+        return formatted;
+    }
 
-        // 3. Kirim ke Gemini API untuk Analisis
+    async function analyzeLocalDataWithGemini(query) {
         
-        document.getElementById('searchStatus').innerHTML = '<i class="fas fa-spinner fa-spin"></i> **[STATUS]** Mengirim data ke Google Gemini untuk dianalisis...';
-
         if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-             return "[ERROR] GEMINI_API_KEY belum diisi. Silakan ganti placeholder dengan kunci API Anda di bagian <script>.";
+            return "**[ERROR]** GEMINI_API_KEY belum diisi. Silakan ganti placeholder dengan kunci API Anda di bagian awal `<script>`.";
         }
+        
+        // Inisialisasi Klien Gemini di sini (setelah validasi key)
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+        
+        const historicalData = formatDataForGemini();
+
+        const prompt = `[PENGANTAR: Anda adalah analis keuangan AI yang bertugas menganalisis data historis XAU/USD (Emas) yang disediakan. Analisis Anda harus STRIKTLY berdasarkan data yang diberikan dan menjawab kueri pengguna. Jangan gunakan pengetahuan eksternal atau data real-time.]
+
+DATA HISTORIS YANG TERSEDIA (2020 - 2025):
+---
+${historicalData}
+---
+
+Kueri Pengguna: "${query}"
+
+Berdasarkan data historis di atas, lakukan analisis berikut:
+1. Ringkas 3 poin utama (Trend, Faktor) yang relevan dengan kueri pengguna.
+2. Berikan narasi/jawaban mendetail yang menjelaskan data terkait kueri.
+3. Berikan kesimpulan singkat (misalnya, jika pengguna bertanya tentang Januari, jawablah 'Januari cenderung mengalami kenaikan awal lalu terkoreksi').`;
 
         try {
             const response = await ai.models.generateContent({
                 model: model,
-                contents: newsPrompt,
+                contents: prompt,
                 config: {
-                    systemInstruction: "You are a professional financial analyst specialized in Gold (XAU/USD) market. Your response must be formatted using Markdown (with bolding, lists, and headings if necessary) and strictly based on the provided news data. Do not use external knowledge.",
+                    systemInstruction: "You are a professional financial analyst specialized in XAU/USD historical data. Your response must be formatted using Markdown, be professional, and strictly based only on the provided historical data. Use clear headings and lists.",
                     temperature: 0.2 
                 }
             });
 
             // 4. Format Output
-            let output = `**[ANALISIS LENGKAP OLEH GEMINI AI]**\n\n`;
+            let output = `**[ANALISIS DATA LOKAL OLEH GEMINI AI]**\n`;
+            output += `(Analisis ini didasarkan pada data Heatmap statis tahun 2020-2025, bukan data pasar real-time.)\n\n`;
             output += response.text;
-            output += `\n\n---\n[INFO BERITA MENTAH]\n`;
-            output += `Sumber Berita Digunakan (${newsData.slice(0, 5).length} Artikel Teratas):\n`;
-            newsData.slice(0, 5).forEach((article, index) => {
-                 output += `> ${index + 1}. [${article.source.name}] ${article.title}\n`;
-            });
-            output += "\n[EXECUTION COMPLETE] Analisis berdasarkan data News API dan kecerdasan Gemini AI.";
+            output += `\n\n---\n[EXECUTION COMPLETE] Analisis berdasarkan data historis yang tersedia.`;
             
             return output;
 
         } catch (error) {
             console.error('Error generating content with Gemini:', error);
-            return `[FATAL ERROR] Gagal koneksi atau memproses Gemini API: ${error.message}. Pastikan API Key valid dan Anda memiliki kuota.`;
+            return `[FATAL ERROR] Gagal memproses Gemini API: ${error.message}. Pastikan API Key valid dan Anda memiliki kuota.`;
         }
     }
 
@@ -812,16 +776,16 @@ const model = 'gemini-2.5-flash';
         const newsResultPre = document.getElementById('newsResult');
 
         // Check API Keys saat loading
-        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE" || NEWS_API_KEY === "YOUR_NEWS_API_KEY_HERE") {
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
             searchNewsBtn.disabled = true;
-            newsResultPre.textContent = "**[!! WARNING !!]** API Key belum dimasukkan! Silakan edit file index.html dan ganti **GEMINI_API_KEY** serta **NEWS_API_KEY** dengan kunci Anda yang valid di bagian awal `<script>`.";
+            newsResultPre.textContent = "**[!! WARNING !!]** Gemini API Key belum dimasukkan! Silakan edit file index.html dan ganti **GEMINI_API_KEY** dengan kunci Anda yang valid di bagian awal `<script>`. Fitur AI dinonaktifkan.";
         } else {
-             searchNewsBtn.disabled = false;
+            newsResultPre.textContent = "[CONSOLE] Gemini AI Terminal siap. Masukkan kueri analisis data Anda di atas.";
         }
 
         // Hanya aktifkan tombol jika ada input DAN key sudah valid
         newsQueryInput.addEventListener('input', () => {
-             if (GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE" && NEWS_API_KEY !== "YOUR_NEWS_API_KEY_HERE") {
+             if (GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE") {
                 searchNewsBtn.disabled = newsQueryInput.value.trim() === '';
             }
         });
@@ -832,11 +796,12 @@ const model = 'gemini-2.5-flash';
 
             searchNewsBtn.disabled = true;
             searchStatus.style.display = 'block';
-            newsResultPre.textContent = `[CONSOLE] Memulai pencarian berita terbaru untuk: ${query} ...`;
+            searchStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> **[STATUS]** Mengirim kueri ke Google Gemini...';
+            newsResultPre.textContent = `[CONSOLE] Menganalisis data historis untuk kueri: ${query} ...`;
             
             try {
-                const aiResponse = await searchNewsAndAnalyze(query);
-                newsResultPre.innerHTML = aiResponse; // Ganti textContent dengan innerHTML agar markdown Gemini terbaca
+                const aiResponse = await analyzeLocalDataWithGemini(query);
+                newsResultPre.innerHTML = aiResponse; // innerHTML agar markdown Gemini terbaca
             } catch (error) {
                 console.error('Error during AI process:', error);
                 newsResultPre.textContent = `[FATAL ERROR] Kesalahan umum: ${error.message}`;
