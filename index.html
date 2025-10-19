@@ -887,19 +887,18 @@ document.addEventListener('DOMContentLoaded', () => {
         chatContent.scrollTop = chatContent.scrollHeight;
         
         try {
-            // KIRIM DATA KE SERVER ENDPOINT ANDA
-            const response = await fetch('/api/chat-gemini', { // GANTI DENGAN ENDPOINT SERVER ANDA
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    history: chatHistory,
-                    newMessage: userMessage,
-                    // Tambahkan data historis XAU/USD sebagai konteks untuk AI (opsional, tapi sangat membantu)
-                    historicalData: rawData
-                })
-            });
+    // 1. Ubah URL ini
+    const response = await fetch('/api/chat-gemini', { // GANTI DENGAN URL RELATIF INI
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            history: chatHistory,
+            newMessage: userMessage,
+            historicalData: rawData
+        })
+    });
 
             if (!response.ok) {
                 throw new Error(`Error HTTP: ${response.status}`);
