@@ -151,7 +151,7 @@
         .modal-body strong { color: #00ff41; }
         .modal-body #modalFactor { color: #ffc107 !important; }
         
-        /* SOCIAL MEDIA TABLE STYLING */
+        /* SOCIAL MEDIA TABLE STYLING (Sudah diatur scroll) */
         .social-table-container {
             max-height: 250px; 
             overflow-y: auto;
@@ -193,7 +193,7 @@
             width: 20px; 
         }
 
-        /* Feature Menu Button Styling */
+        /* NEW: Feature Menu Button Styling */
         .feature-button {
             display: block;
             width: 100%;
@@ -226,6 +226,7 @@
             color: #111; /* Ikon hitam saat hover */
         }
         .feature-menu-container {
+             /* Pastikan tinggi maksimumnya mirip atau sama dengan social table container */
             max-height: 250px; 
             overflow-y: auto;
             border: 1px solid #333333;
@@ -234,92 +235,75 @@
             padding: 10px;
         }
 
+        /* NEW: Chat Modal Styling */
+#chatModal .modal-content {
+    background-color: #2c2c2c; /* Background gelap */
+    border: 2px solid #ffc107; /* Border emas */
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+}
+#chatModal .modal-header {
+    background-color: #1e1e1e;
+    border-bottom: 1px solid #00ff41;
+    color: #ffc107;
+}
+#chatContent {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #111; /* Area chat background */
+    border: 1px dashed #333;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+.chat-message {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 15px;
+    max-width: 85%;
+    font-size: 0.9rem;
+    word-wrap: break-word;
+}
+.user-message {
+    background-color: #004d40; /* Hijau tua */
+    color: #00ff41;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+    text-align: right;
+}
+.ai-message {
+    background-color: #333333; /* Abu-abu sedang */
+    color: #e0e0e0;
+    margin-right: auto;
+    border-bottom-left-radius: 0;
+    text-align: left;
+}
+#chatInput {
+    background-color: #1e1e1e;
+    color: #00ff41;
+    border: 1px solid #00ff41;
+    font-family: 'Roboto Mono', monospace;
+}
+#chatInput:focus {
+    box-shadow: 0 0 5px #ffc107;
+}
+#sendMessageBtn {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #111;
+    font-weight: bold;
+}
+#sendMessageBtn:hover {
+    background-color: #ffa000;
+    border-color: #ffa000;
+}
 
-        /* --- NEW: GEMINI CHAT STYLING --- */
-        #geminiChatContainer {
-            min-height: 485px; /* Sesuaikan agar tingginya mirip dengan card di sebelahnya */
-            display: flex;
-            flex-direction: column;
-            background-color: #0d0d0d; /* Background yang sangat gelap */
-            border: 2px solid #00ff41; /* Border neon */
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-            border-radius: 5px;
-            overflow: hidden;
-            padding: 15px;
-        }
-        #chatOutput {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px dashed #333333;
-            max-height: 380px; /* Batasi tinggi output */
-        }
-        .message {
-            margin-bottom: 10px;
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-        }
-        .user-message {
-            background-color: #003366;
-            color: #0dcaf0; /* Biru muda */
-            text-align: right;
-            margin-left: 20%;
-        }
-        .gemini-message {
-            background-color: #2c2c2c;
-            color: #e0e0e0;
-            border-left: 3px solid #00ff41;
-            margin-right: 20%;
-            text-align: left;
-        }
-        .chat-input-group {
-            display: flex;
-        }
-        #chatInput {
-            flex-grow: 1;
-            background-color: #1e1e1e;
-            color: #00ff41;
-            border: 1px solid #00ff41;
-            border-right: none;
-            padding: 10px;
-            font-family: 'Roboto Mono', monospace;
-            border-radius: 3px 0 0 3px;
-        }
-        #chatInput:focus {
-            outline: none;
-            box-shadow: 0 0 5px #ffc107;
-        }
-        #chatSendBtn {
-            background-color: #ffc107;
-            color: #111;
-            border: 1px solid #ffc107;
-            padding: 10px 15px;
-            border-radius: 0 3px 3px 0;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        #chatSendBtn:hover {
-            background-color: #00ff41;
-            border-color: #00ff41;
-        }
-        .initial-prompt {
-            color: #aaaaaa;
-            font-style: italic;
-            text-align: center;
-            padding-top: 50px;
-        }
-        /* --- END NEW STYLING --- */
 
         /* Footer */
         footer {
-            background-color: #1e1e1e; 
-            border-top: 1px dashed #333333;
+             background-color: #1e1e1e; 
+             border-top: 1px dashed #333333;
         }
     </style>
-    <script src="https://unpkg.com/@google/genai@0.1.0/dist/client.umd.js"></script>
 </head>
 <body>
 
@@ -381,7 +365,7 @@
             <h2 class="gold-title">Analyst/Developer Terminal Access</h2>
             <div class="row">
                 
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <h3 class="gold-title" style="font-size: 1.1rem; border-bottom: none; margin-bottom: 5px;">[01] Profile Ringkas (LOG_ACCESS)</h3>
                     <div class="social-table-container">
                         <table class="table table-borderless social-table">
@@ -419,31 +403,22 @@
                     <p class="text-muted mt-2" style="font-size: 0.75rem;">Status: Connection Established. Data Valid.</p>
                 </div>
                 
-                <div class="col-md-4">
-                    <h3 class="gold-title" style="font-size: 1.1rem; border-bottom: none; margin-bottom: 5px;">[02] Market AI (EXEC_MENU)</h3>
+                <div class="col-md-6">
+                    <h3 class="gold-title" style="font-size: 1.1rem; border-bottom: none; margin-bottom: 5px;">[02] More Features (EXEC_MENU)</h3>
                     <div class="feature-menu-container">
-                        <a href="https://ai-market-predictor.vercel.app/" class="feature-button"><i class="fas fa-chart-line"></i> AI Chart Analyzer</a>
-                        <a href="https://sales-text-generator.vercel.app/" class="feature-button"><i class="fas fa-robot"></i> AI Sales Text Generator</a>
-                        <a href="https://ai-task-solver.vercel.app/" class="feature-button"><i class="fas fa-book"></i> AI Task Solver</a>
-                        <a href="mailto:farid04siddiq@gmail.com" class="feature-button"><i class="fas fa-envelope"></i> Contact Dev Team</a>
+                        <div class="feature-menu-container">
+    <button class="feature-button" id="openChatBtn" data-bs-toggle="modal" data-bs-target="#chatModal"><i class="fas fa-comment-dots"></i> AI Analyst Chat (Gemini)</button>
+    <a href="https://ai-market-predictor.vercel.app/" class="feature-button"><i class="fas fa-chart-line"></i> AI Chart Analyzer</a>
+    <a href="https://sales-text-generator.vercel.app/" class="feature-button"><i class="fas fa-robot"></i> AI Sales Text Generator</a>
+    <a href="https://ai-task-solver.vercel.app/" class="feature-button"><i class="fas fa-book"></i> AI Task Solver</a>
+    <a href="mailto:farid04siddiq@gmail.com" class="feature-button"><i class="fas fa-envelope"></i> Contact Dev Team</a>
+</div>
+                    
                     </div>
                      <p class="text-muted mt-2" style="font-size: 0.75rem;">**DISCLAIMER:** Tautan menu hanya bersifat simulasi.</p>
                 </div>
                 
-                <div class="col-md-4">
-                    <h3 class="gold-title" style="font-size: 1.1rem; border-bottom: none; margin-bottom: 5px;">[03] Gemini Market Chat <i class="fas fa-brain" style="color: #0dcaf0;"></i></h3>
-                    <div id="geminiChatContainer">
-                        <div id="chatOutput">
-                            <p class="initial-prompt">Ketik pertanyaan Anda tentang geopolitik, konflik, atau kondisi ekonomi yang memengaruhi pasar.</p>
-                        </div>
-                        <div class="chat-input-group">
-                            <input type="text" id="chatInput" placeholder="Tanyakan tren pasar..." disabled>
-                            <button id="chatSendBtn" disabled><i class="fas fa-paper-plane"></i></button>
-                        </div>
-                        <p class="text-muted mt-2" style="font-size: 0.75rem;">Status: <span id="chatStatus">AI Initializing...</span></p>
-                    </div>
-                </div>
-                </div>
+            </div>
             
         </div>
         </main>
@@ -467,16 +442,37 @@
       </div>
     </div>
 
+<div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="chatModalLabel"><i class="fas fa-robot"></i> Terminal: Gemini AI Analyst</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div id="chatContent" class="d-flex flex-column">
+                <div class="chat-message ai-message">
+                    Halo! Saya adalah Asisten Analis Gemini. Tanyakan apapun tentang tren XAU/USD, analisis historis, atau faktor pasar global.
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="text" class="form-control" id="chatInput" placeholder="Ketik pesan Anda di sini..." aria-label="Ketik pesan">
+                <button class="btn btn-warning" type="button" id="sendMessageBtn">Kirim</button>
+            </div>
+            <p class="text-muted mt-2" style="font-size: 0.75rem;">Status: Waiting for user input. Connection to Gemini API via custom endpoint.</p>
+        </div>
+      </div>
+    </div>
+</div>
+
     <footer class="text-center py-3">
         <p style="color: #00ff41;">[SYSTEM STATUS: OK] &copy; 2025 Financial Analysis. Data Integrity: HIGH.</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-// --- Data Historis (Simulasi) ---
-// *ANDA HARUS MENGGANTI INI DENGAN DATA NYATA ANDA*
-// Data Kualitatif (Tren & Narasi) - TIDAK ADA PERUBAHAN PADA DATA
+    <script>
+        // Data Kualitatif (Tren & Narasi) - TIDAK ADA PERUBAHAN PADA DATA
         const rawData = [
             { monthYear: "Jan 2020", trend: "Uptrend moderat", desc: "Emas menguat stabil sejak awal tahun.", factor: "Ketegangan AS–Iran & penyebasan awal COVID-19 di Tiongkok." },
             { monthYear: "Feb 2020", trend: "Uptrend kuat", desc: "Harga melonjak tajam ke area 1.680–1.700.", factor: "COVID-19 mulai menyebar global, minat safe haven naik." },
@@ -623,9 +619,8 @@
     { month: 'Sep', year: 2025, high: 3871.7, low: 3437.028 },
     { month: 'Okt', year: 2025, high: 4380.074, low: 3819.335 },
 ];
-// --------------------------------
 
-const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         
         // 1. Fungsi untuk menggambar Heatmap Interaktif
         function drawHeatmap() {
@@ -646,8 +641,8 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Se
                     const specificData = rawData.find(d => d.monthYear.includes(monthYear)); 
                     
                     if (!specificData) {
-                          html += `<td style="background-color: #111111; cursor: default; color: #333;">-</td>`;
-                          return;
+                         html += `<td style="background-color: #111111; cursor: default; color: #333;">-</td>`;
+                         return;
                     }
 
                     const trend = specificData.trend.toLowerCase();
@@ -842,100 +837,131 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Se
             });
         }
 
-        // 6. Gemini Chat Implementation
-async function setupGeminiChat() {
-    // **PENTING: GANTI INI DENGAN API KEY ANDA YANG SEBENARNYA**
-    // JANGAN PERNAH MENYIMPAN API KEY ASLI DI KODE PUBLIK!
-    const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
-    
-    const chatOutput = document.getElementById('chatOutput');
+        // NEW: LOGIC CHAT AI GEMINI
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (kode yang sudah ada: drawHeatmap(), drawBarChart(), dll)
+
+    const chatContent = document.getElementById('chatContent');
     const chatInput = document.getElementById('chatInput');
-    const chatSendBtn = document.getElementById('chatSendBtn');
-    const chatStatus = document.getElementById('chatStatus');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    const modalElement = document.getElementById('chatModal');
 
-    // SOLUSI UNTUK TYPERROR: Cek apakah SDK sudah dimuat
-    if (typeof window.googleGenai === 'undefined' || !window.googleGenai.GoogleGenAI) {
-        chatStatus.textContent = "CRITICAL ERROR: GoogleGenAI SDK tidak ditemukan. Cek <script> tag di HTML.";
-        console.error("Gemini Load Error: window.googleGenai object is undefined. SDK not loaded.");
-        return;
+    // Riwayat chat untuk menjaga konteks percakapan
+    // Format: [{role: "user"|"model", parts: [{text: "..."}]}]
+    let chatHistory = [
+        {
+            role: "model",
+            parts: [{ text: "Halo! Saya adalah Asisten Analis Gemini. Tanyakan apapun tentang tren XAU/USD, analisis historis, atau faktor pasar global. (Contoh: 'Bagaimana tren XAU/USD di bulan Februari secara historis?')" }]
+        }
+    ];
+
+    // Simpan pesan awal ke chatHistory jika belum ada
+    if (chatContent.children.length === 0) {
+        appendMessage('model', "Halo! Saya adalah Asisten Analis Gemini. Tanyakan apapun tentang tren XAU/USD, analisis historis, atau faktor pasar global.", true);
     }
     
-    // Cek API Key
-    if (GEMINI_API_KEY === "GANTI_DENGAN_API_KEY_ANDA_DI_SINI") {
-        chatStatus.textContent = "ERROR: API Key Belum Dimasukkan. Silakan Ganti Placeholder.";
-        return;
+    // Fungsi untuk menampilkan pesan di UI
+    function appendMessage(role, text, isInitial = false) {
+        if (isInitial && chatContent.children.length > 0) return; // Hindari duplikasi pesan awal
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${role}-message`;
+        messageDiv.textContent = text;
+        chatContent.appendChild(messageDiv);
+        chatContent.scrollTop = chatContent.scrollHeight; // Scroll ke bawah
     }
 
-    try {
-        // Objek sudah dijamin ada karena sudah diperiksa di atas
-        const { GoogleGenAI } = window.googleGenai;
-        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    // Fungsi untuk memanggil Server Endpoint (Harap ganti dengan URL endpoint Anda)
+    async function getGeminiResponse(userMessage) {
+        
+        // Tambahkan pesan pengguna ke riwayat dan UI
+        appendMessage('user', userMessage);
+        
+        // Tambahkan pesan pengguna ke riwayat untuk konteks
+        chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
 
-        // System Instruction untuk mengarahkan AI
-        const systemInstruction = `Anda adalah seorang Market Analyst AI yang berfokus pada analisis dampak peristiwa global terhadap pasar keuangan (terutama Gold, Forex, dan Index). Berikan jawaban yang ringkas, faktual, dan berfokus pada korelasi antara geopolitik, konflik, atau ekonomi (seperti data inflasi, suku bunga, NFP) dengan pergerakan harga komoditas atau mata uang. Gunakan bahasa Indonesia yang profesional.`;
+        // Tampilkan pesan "Typing..."
+        const typingMessage = document.createElement('div');
+        typingMessage.className = 'chat-message ai-message';
+        typingMessage.innerHTML = '<i class="fas fa-ellipsis-h fa-beat-fade"></i>'; // Efek mengetik
+        chatContent.appendChild(typingMessage);
+        chatContent.scrollTop = chatContent.scrollHeight;
+        
+        try {
+            // KIRIM DATA KE SERVER ENDPOINT ANDA
+            const response = await fetch('/api/chat-gemini', { // GANTI DENGAN ENDPOINT SERVER ANDA
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    history: chatHistory,
+                    newMessage: userMessage,
+                    // Tambahkan data historis XAU/USD sebagai konteks untuk AI (opsional, tapi sangat membantu)
+                    historicalData: rawData
+                })
+            });
 
-        const chat = ai.chats.create({
-            model: "gemini-2.5-flash",
-            config: {
-                systemInstruction: systemInstruction,
-                temperature: 0.3 
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
             }
-        });
 
-        // Tampilan inisialisasi berhasil
-        chatOutput.innerHTML = `<div class="gemini-message">Selamat datang di Market AI. Saya siap membantu menganalisis dampak geopolitik dan ekonomi pada pasar. Silakan tanyakan, misalnya: "Bagaimana krisis di Timur Tengah memengaruhi harga Emas saat ini?"</div>`;
-        chatInput.disabled = false;
-        chatSendBtn.disabled = false;
-        chatStatus.textContent = "AI Ready (Online)";
-
-        // Kirim pesan
-        async function sendMessage() {
-            const message = chatInput.value.trim();
-            if (message === '') return;
-
-            // Tampilkan pesan pengguna
-            chatOutput.innerHTML += `<div class="message user-message">Anda: ${message}</div>`;
-            chatInput.value = '';
-            chatOutput.scrollTop = chatOutput.scrollHeight; 
+            const data = await response.json();
+            const aiText = data.text || "Maaf, terjadi kesalahan saat memproses permintaan Anda.";
             
-            chatInput.disabled = true;
-            chatSendBtn.disabled = true;
-            chatStatus.textContent = "AI Processing...";
+            // Hapus pesan "Typing..."
+            chatContent.removeChild(typingMessage);
 
-            try {
-                // Kirim ke Gemini
-                const response = await chat.sendMessage({ message: message });
+            // Tambahkan balasan AI ke riwayat dan UI
+            appendMessage('model', aiText);
+            chatHistory.push({ role: "model", parts: [{ text: aiText }] });
 
-                // Tampilkan pesan Gemini
-                const geminiText = response.text;
-                chatOutput.innerHTML += `<div class="message gemini-message">Gemini: ${geminiText}</div>`;
-                
-            } catch (error) {
-                console.error("Gemini API Error:", error);
-                chatOutput.innerHTML += `<div class="message gemini-message" style="border-left-color: #ff6347; color: #ff6347;">ERROR: Gagal terhubung ke AI. Cek konsol atau status API Key.</div>`;
-            } finally {
-                chatInput.disabled = false;
-                chatSendBtn.disabled = false;
-                chatStatus.textContent = "AI Ready (Online)";
-                chatOutput.scrollTop = chatOutput.scrollHeight; 
-                chatInput.focus();
-            }
+        } catch (error) {
+            console.error('Gemini API Error:', error);
+            // Hapus pesan "Typing..."
+            chatContent.removeChild(typingMessage);
+            appendMessage('model', `[ERROR: ${error.message}] Gagal terhubung ke AI. Pastikan server endpoint Anda berjalan dengan baik.`);
+        } finally {
+            chatInput.disabled = false;
+            sendMessageBtn.disabled = false;
+            chatInput.value = '';
+            chatInput.focus();
         }
-
-        // Event Listeners
-        chatSendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-    } catch (error) {
-        // Catch ini hanya akan menangkap error yang terjadi SETELAH SDK dimuat (misalnya API Key invalid atau koneksi terputus).
-        console.error("Gemini Initialization Error:", error);
-        chatStatus.textContent = "CRITICAL ERROR: Failed to establish API connection.";
     }
-}
+
+    // Event Listener untuk tombol Kirim
+    sendMessageBtn.addEventListener('click', () => {
+        const message = chatInput.value.trim();
+        if (message) {
+            chatInput.disabled = true;
+            sendMessageBtn.disabled = true;
+            getGeminiResponse(message);
+        }
+    });
+
+    // Event Listener untuk tombol Enter
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && chatInput.value.trim() && !chatInput.disabled) {
+            sendMessageBtn.click();
+        }
+    });
+
+    // Reset riwayat chat saat modal ditutup
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        // Hanya reset riwayat, tidak hapus pesan awal di UI
+        chatHistory = [
+            {
+                role: "model",
+                parts: [{ text: "Halo! Saya adalah Asisten Analis Gemini. Tanyakan apapun tentang tren XAU/USD, analisis historis, atau faktor pasar global. (Contoh: 'Bagaimana tren XAU/USD di bulan Februari secara historis?')" }]
+            }
+        ];
+        
+        // Hapus semua pesan kecuali pesan AI pertama
+        while (chatContent.children.length > 1) {
+            chatContent.removeChild(chatContent.lastChild);
+        }
+    });
+});
+// END NEW LOGIC
 
 
         // Panggil semua fungsi setelah halaman dimuat
@@ -946,9 +972,6 @@ async function setupGeminiChat() {
             
             const continousData = getContinousPriceData();
             drawLineChartContinous(continousData);
-
-            // Inisialisasi Chat AI
-            setupGeminiChat();
         });
     </script>
 
