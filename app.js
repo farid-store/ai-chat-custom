@@ -1,5 +1,6 @@
-// --- 0. SIMULASI ENVIRONMENT VARIABLE (TIDAK AMAN UNTUK PRODUKSI) ---
-const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
+// --- 0. SIMULASI ENVIRONMENT VARIABLE ---
+// GANTI DENGAN KUNCI API ANDA UNTUK MENGAKTIFKAN CHAT
+const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU 
 
 // --- 1. DATA HISTORIS XAU/USD ---
 const rawData = [
@@ -89,10 +90,10 @@ let state = {
     isChatMaximized: false,
     tableSortKey: 'monthYear', 
     tableSortDir: 'asc',       
-    currentTableData: [...rawData] // **NEW:** Data yang sedang ditampilkan (sudah difilter/di-sort)
+    currentTableData: [...rawData] 
 };
 
-// --- 3. FUNGSI UTILITAS UI (TIDAK BERUBAH) ---
+// --- 3. FUNGSI UTILITAS UI ---
 
 const updateLucideIcons = () => {
     if (window.lucideCreateIcons) {
@@ -196,27 +197,18 @@ const renderHistoricalData = (dataToRender) => {
     updateLucideIcons(); 
 };
 
-/**
- * Langkah 1: Filter data mentah berdasarkan input pencarian.
- * Langkah 2: Lanjutkan ke fungsi pengurutan.
- */
 const filterTable = () => {
     const query = elements.tableSearchInput.value.toLowerCase();
     
-    // **FIXED:** Filter selalu dilakukan pada rawData
     const filteredData = rawData.filter(item => 
         item.monthYear.toLowerCase().includes(query) ||
         item.trend.toLowerCase().includes(query) ||
         item.factor.toLowerCase().includes(query)
     );
     
-    // Lanjutkan ke pengurutan dengan data yang sudah difilter
     sortAndRenderTable(filteredData); 
 };
 
-/**
- * Langkah 3: Urutkan data hasil filter dan simpan di state.
- */
 const sortAndRenderTable = (dataToProcess) => {
     const { tableSortKey, tableSortDir } = state;
     
@@ -229,10 +221,8 @@ const sortAndRenderTable = (dataToProcess) => {
         return 0;
     });
 
-    // **FIXED:** Simpan data yang sudah diurutkan ke state
     state.currentTableData = sortedData;
     
-    // Render data yang sudah diurutkan
     renderHistoricalData(sortedData);
 };
 
@@ -244,7 +234,6 @@ const handleSortClick = (key) => {
         state.tableSortDir = 'asc';
     }
     
-    // **FIXED:** Panggil filterTable untuk memulai proses Filter -> Sort -> Render
     filterTable(); 
 };
 
@@ -271,7 +260,7 @@ const updateSortIcons = () => {
 };
 
 
-// --- 5. FUNGSI LOGIKA STATE (TIDAK BERUBAH) ---
+// --- 5. FUNGSI LOGIKA STATE ---
 
 const updateFormState = () => {
     const inputFilled = elements.chatInput.value.trim().length > 0;
@@ -347,7 +336,7 @@ const toggleChatMaximize = () => {
 };
 
 
-// --- 6. FUNGSI API & HANDLER UTAMA (TIDAK BERUBAH) ---
+// --- 6. FUNGSI API & HANDLER UTAMA ---
 
 const callGeminiApi = async (contents, retryCount = 0) => {
     try {
@@ -408,13 +397,15 @@ const sendMessage = async (e) => {
         return;
     }
 
-    elements.chatInput.value = '';
     hideError();
     state.isLoading = true;
     updateFormState();
     
+    // FIX: Pastikan bubble chat user dirender sebelum input dikosongkan
     messages.push({ role: 'user', text: userMessage });
     createMessageBubble('user', userMessage);
+    elements.chatInput.value = ''; // Kosongkan input setelah pesan dirender
+
     showLoadingIndicator();
 
     const apiContents = messages.map(msg => ({
@@ -429,7 +420,7 @@ const sendMessage = async (e) => {
 
 const initialize = () => {
     // 1. Render data tabel awal (sudah di sort default)
-    sortAndRenderTable(rawData); // Kirim rawData untuk pengurutan awal
+    sortAndRenderTable(rawData); 
     
     // 2. Setup Event Listeners
     elements.chatForm.addEventListener('submit', sendMessage);
