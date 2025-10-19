@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD AI Analyst Chat</title>
+    <title>XAU/USD INTEGRATED AI ANALYST DASHBOARD</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script type="module">
-        // Perbaikan: Mengubah path impor ke dist/esm/index.js agar createIcons dapat diakses sebagai named export.
         import { createIcons } from 'https://unpkg.com/lucide@latest/dist/esm/index.js';
         window.lucideCreateIcons = createIcons;
         document.addEventListener('DOMContentLoaded', () => {
@@ -15,483 +20,821 @@
             }
         });
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
     <style>
-        /* Gaya Cyberpunk/Matrix */
-        body { 
-            font-family: 'Consolas', 'Courier New', monospace; 
-            color: #00ff41; 
-            background-color: #0a0a0a; 
-            text-shadow: 0 0 1px #00ff41; /* Efek neon ringan */
+        /* BASE & THEME (Mengambil dari Heatmap, lebih komprehensif) */
+        body {
+            background-color: #111111;
+            color: #00ff41;
+            font-family: 'Roboto Mono', Consolas, 'Courier New', monospace;
+            padding-top: 20px;
         }
+        .container-xl { max-width: 1400px; }
+        .header-section {
+            background-color: #1e1e1e;
+            border-bottom: 2px solid #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            margin-bottom: 25px;
+        }
+        .header-section h1 { color: #ffc107; font-weight: 700; }
+        .header-section p { color: #aaaaaa; }
+        .content-card {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+            border: 1px solid #333333;
+        }
+        .gold-title {
+            color: #ffc107;
+            border-bottom: 1px dashed #333333;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+
+        /* CUSTOM SCROLLBAR (Diambil dari Chat) */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #00b32e; }
-        .focus-ring-green:focus { 
-            box-shadow: 0 0 0 3px rgba(0, 255, 65, 0.5), 0 0 10px rgba(0, 255, 65, 0.8); 
-            border-color: #00ff41; 
+
+        /* INPUT/BUTTON STYLING (Diambil dari Chat, disesuaikan ke tema) */
+        .chat-input {
+            background-color: #1e1e1e !important;
+            color: #00ff41 !important;
+            border: 1px solid #00ff41 !important;
+            border-radius: 50px !important;
+            padding: 12px 18px !important;
+        }
+        .chat-input:focus {
+            box-shadow: 0 0 0 3px rgba(0, 255, 65, 0.5), 0 0 10px rgba(0, 255, 65, 0.8) !important;
+            border-color: #00ff41 !important;
             outline: none;
         }
-        #app-container { 
-            background-image: radial-gradient(circle at 50% 10%, rgba(0,255,65,0.1), rgba(0,0,0,0) 50%); 
+        .send-btn {
+            background-color: #008000 !important;
+            color: #111 !important;
+            transition: background-color 0.2s;
         }
-        .transition-layout { transition: grid-template-columns 300ms, height 300ms; }
+        .send-btn:hover:not(:disabled) { background-color: #00ff41 !important; }
+        .send-btn:disabled { 
+            background-color: #333 !important; 
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+
+        /* MESSAGE BUBBLE */
+        .user-bubble {
+            background-color: #008000 !important;
+            color: #fff !important;
+            border-radius: 15px 5px 15px 15px !important;
+        }
+        .model-bubble {
+            background-color: #2c2c2c !important;
+            color: #00ff41 !important;
+            border: 1px solid #00ff41 !important;
+            border-radius: 5px 15px 15px 15px !important;
+        }
+        .text-bold-neon {
+            font-weight: bold;
+            color: #ffc107;
+            text-shadow: 0 0 5px #ffc107;
+        }
+
+        /* HEATMAP STYLING */
+        .heatmap-table { border-collapse: collapse; border-spacing: 0; width: 100%; }
+        .heatmap-table th, .heatmap-table td {
+            text-align: center; padding: 4px 2px; cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease; font-size: 0.85rem; 
+            font-weight: bold; color: #111; border: 1px solid #1e1e1e;
+        }
+        .heatmap-table th { background-color: #2c2c2c; color: #ffc107; border: none; }
+        .trend-up { background-color: #008000; color: #fff; }
+        .trend-down { background-color: #8b0000; color: #fff; }
+        .trend-range { background-color: #003366; color: #aaaaaa; }
+        .heatmap-table td:hover { 
+            box-shadow: 0 0 10px #00ff41; 
+            transform: scale(1.02); z-index: 10;
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-<div id="app-container" class="min-h-screen flex flex-col p-4 sm:p-8">
-    
-    <header class="w-full max-w-7xl mx-auto mb-6">
-        <h1 class="text-3xl font-extrabold text-yellow-400 text-center mb-1 drop-shadow-[0_0_10px_rgba(255,193,7,0.5)]">
-            <span class="text-green-500">XAU/USD</span> AI Analyst Chat
-        </h1>
-        <p class="text-center text-sm text-green-500 mb-4">
-            Analisis ditenagai oleh Gemini AI. API Key dimuat via JavaScript.
-        </p>
-    </header>
-    
-    <main id="main-content" class="flex-grow w-full max-w-7xl mx-auto grid lg:grid-cols-3 gap-6 transition-layout">
-        
-        <div id="chat-container" class="lg:col-span-2 bg-gray-900 border border-green-900 rounded-xl shadow-2xl flex flex-col overflow-hidden h-[80vh] transition-all duration-300">
-            <div class="flex justify-between items-center p-4 border-b border-green-800 bg-gray-800">
-                <h2 class="text-xl font-bold text-green-400 flex items-center">
-                    <i data-lucide="message-square" class="w-5 h-5 mr-2"></i> Gemini Analysis Console
-                </h2>
-                <button id="maximizeChatBtn" class="text-green-500 hover:text-green-300 p-1 rounded-full bg-gray-900 transition-colors" title="Perbesar Chat">
-                    <i data-lucide="maximize-2" class="w-5 h-5"></i>
-                </button>
-            </div>
+    <script>
+        const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; // Ganti ini!
+        const MODEL_NAME = 'gemini-2.5-flash-preview-09-2025';
+        const GEMINI_API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
+        const MAX_RETRIES = 3;
 
-            <div id="messagesContainer" class="flex-grow p-4 overflow-y-auto custom-scrollbar">
-                <div id="initial-message" class="flex flex-col items-center justify-center h-full text-center text-green-600">
-                    <p class="text-lg mb-2">ACCESS GRANTED. MEMORY CONTEXT LOADED.</p>
-                    <p class="text-sm">
-                        Tanyakan tentang tren, high/low, atau faktor pemicu Emas dari tahun 2020 hingga 2025.
-                    </p>
-                </div>
-                <div id="messages-end-ref"></div>
-            </div>
+        // DATA KUALITATIF LENGKAP
+        const rawData = [
+            { monthYear: "Jan 2020", trend: "Uptrend (>+2%)", desc: "Ketegangan AS-Iran memicu Safe Haven. Bullish start.", factor: "AS-Iran Tension, Fed Rate Hold" },
+            { monthYear: "Feb 2020", trend: "Ranging", desc: "Kekuatan Dolar AS membatasi kenaikan. Aksi jual ringan di akhir bulan.", factor: "Strong USD, Pre-COVID uncertainty" },
+            { monthYear: "Mar 2020", trend: "Downtrend (>-5%)", desc: "Panic selling untuk likuiditas USD saat Covid-19 menyebar global.", factor: "COVID-19 Panic, Liquidity Grab" },
+            { monthYear: "Apr 2020", trend: "Uptrend (>+5%)", desc: "Stimulus masif The Fed dan kekhawatiran resesi mendorong harga.", factor: "Massive Fed Stimulus, Recession Fear" },
+            { monthYear: "Mei 2020", trend: "Ranging", desc: "Fokus pasar bergeser ke data ekonomi AS yang memburuk, Dolar menguat.", factor: "Deteriorating US Economy, USD strength" },
+            { monthYear: "Jun 2020", trend: "Uptrend (>+3%)", desc: "Emas sebagai lindung nilai inflasi. Suku bunga mendekati nol.", factor: "Inflation Hedge, Near-Zero Rates" },
+            { monthYear: "Jul 2020", trend: "Uptrend (>+10%)", desc: "Lonjakan kasus COVID-19, pelemahan Dolar AS, dan stimulus fiskal AS baru.", factor: "COVID Surge, Weak USD, Fiscal Stimulus" },
+            { monthYear: "Agu 2020", trend: "Downtrend (>-2%)", desc: "Profit taking setelah rekor harga tertinggi ($2073). Pasar menanti berita vaksin.", factor: "Profit Taking, Vaccine Anticipation" },
+            { monthYear: "Sep 2020", trend: "Downtrend (>-4%)", desc: "Penguatan Dolar AS dan keraguan atas stimulus fiskal baru.", factor: "Stronger USD, Fiscal Stimulus Doubt" },
+            { monthYear: "Okt 2020", trend: "Ranging", desc: "Volatilitas tinggi menjelang Pilpres AS. Harga konsolidasi.", factor: "US Election Volatility, Consolidation" },
+            { monthYear: "Nov 2020", trend: "Downtrend (>-3%)", desc: "Optimisme vaksin Pfizer/Moderna, memicu aksi jual safe-haven.", factor: "Vaccine Optimism, Safe-Haven Sell-off" },
+            { monthYear: "Des 2020", trend: "Uptrend (>+2%)", desc: "Rancangan stimulus AS baru dan pelemahan Dolar di akhir tahun.", factor: "New US Stimulus Talks, Year-end USD Weakness" },
+            { monthYear: "Jan 2021", trend: "Downtrend (>-3%)", desc: "Dolar AS rebound, harapan pemulihan global, dan yield obligasi yang naik.", factor: "USD Rebound, Recovery Hopes, Rising Yields" },
+            { monthYear: "Feb 2021", trend: "Downtrend (>-2%)", desc: "Kekuatan Dolar dan sinyal tapering The Fed.", factor: "Tapering Fear, Strong USD" },
+            { monthYear: "Mar 2021", trend: "Downtrend (>-2%)", desc: "Peningkatan yield US Treasury menekan daya tarik Emas.", factor: "Rising US Treasury Yields" },
+            { monthYear: "Apr 2021", trend: "Uptrend (>+3%)", desc: "Dolar AS melemah karena The Fed mempertahankan kebijakan akomodatif.", factor: "Weak USD, Accommodative Fed" },
+            { monthYear: "Mei 2021", trend: "Uptrend (>+7%)", desc: "Kekhawatiran inflasi AS yang tinggi dan penurunan imbal hasil riil.", factor: "High US Inflation, Negative Real Yields" },
+            { monthYear: "Jun 2021", trend: "Downtrend (>-7%)", desc: "The Fed mengisyaratkan kenaikan suku bunga lebih awal (hawkish), penguatan Dolar.", factor: "Hawkish Fed Signal, Strong USD" },
+            { monthYear: "Jul 2021", trend: "Ranging", desc: "Fokus pada data Non-Farm Payrolls AS yang kuat.", factor: "Strong US NFP Data" },
+            { monthYear: "Agu 2021", trend: "Ranging", desc: "Konsolidasi di tengah ketidakpastian tapering dan varian Delta COVID-19.", factor: "Tapering Uncertainty, Delta Variant" },
+            { monthYear: "Sep 2021", trend: "Downtrend (>-4%)", desc: "Keputusan Fed untuk mulai mengurangi pembelian aset (tapering).", factor: "Fed Tapering Decision" },
+            { monthYear: "Okt 2021", trend: "Uptrend (>+2%)", desc: "Kembali munculnya kekhawatiran inflasi. Suku bunga jangka pendek tetap rendah.", factor: "Inflation Concern, Low Short-term Rates" },
+            { monthYear: "Nov 2021", trend: "Uptrend (>+4%)", desc: "Kekhawatiran inflasi dan permintaan fisik yang kuat dari Asia.", factor: "Inflation Fear, Strong Physical Demand" },
+            { monthYear: "Des 2021", trend: "Ranging", desc: "Jeda pergerakan menjelang liburan, The Fed percepat tapering.", factor: "Holiday Slowdown, Accelerated Tapering" },
+            { monthYear: "Jan 2022", trend: "Downtrend (>-2%)", desc: "Federal Reserve mengisyaratkan kenaikan suku bunga Maret.", factor: "Fed Rate Hike Anticipation" },
+            { monthYear: "Feb 2022", trend: "Uptrend (>+6%)", desc: "Invasi Rusia ke Ukraina, memicu lonjakan Safe Haven.", factor: "Russia-Ukraine War (Safe Haven)" },
+            { monthYear: "Mar 2022", trend: "Downtrend (>-3%)", desc: "Fed menaikkan suku bunga untuk pertama kalinya sejak 2018.", factor: "First Fed Rate Hike" },
+            { monthYear: "Apr 2022", trend: "Downtrend (>-2%)", desc: "Dolar AS menguat tajam didukung oleh kebijakan moneter Fed yang ketat.", factor: "Strong USD, Hawkish Fed" },
+            { monthYear: "Mei 2022", trend: "Ranging", desc: "Volatilitas akibat ketakutan inflasi vs kenaikan suku bunga.", factor: "Inflation vs Rate Hikes Volatility" },
+            { monthYear: "Jun 2022", trend: "Downtrend (>-3%)", desc: "Fed menaikkan suku bunga 75 bps, terbesar sejak 1994.", factor: "Aggressive 75bps Fed Hike" },
+            { monthYear: "Jul 2022", trend: "Ranging", desc: "Kekuatan Dolar sedikit mereda, menunggu data CPI AS.", factor: "USD Pullback, CPI Data Wait" },
+            { monthYear: "Agu 2022", trend: "Downtrend (>-3%)", desc: "Pidato Hawkish Powell di Jackson Hole.", factor: "Hawkish Jackson Hole Speech" },
+            { monthYear: "Sep 2022", trend: "Downtrend (>-4%)", desc: "Suku bunga The Fed yang agresif dan penguatan Dolar AS.", factor: "Aggressive Fed Hikes, Strong USD" },
+            { monthYear: "Okt 2022", trend: "Uptrend (>+4%)", desc: "Spekulasi The Fed akan mengurangi laju kenaikan suku bunga.", factor: "Fed Pivot Speculation" },
+            { monthYear: "Nov 2022", trend: "Uptrend (>+6%)", desc: "Inflasi AS menunjukkan tanda-tanda mereda, menopang Emas.", factor: "Easing US Inflation" },
+            { monthYear: "Des 2022", trend: "Uptrend (>+3%)", desc: "Pelemahan Dolar dan ekspektasi pivot The Fed di 2023.", factor: "USD Weakness, 2023 Fed Pivot Expectation" },
+            { monthYear: "Jan 2023", trend: "Uptrend (>+6%)", desc: "Momentum berlanjut dari akhir 2022, Dolar tertekan.", factor: "Continuation Momentum, USD Pressure" },
+            { monthYear: "Feb 2023", trend: "Downtrend (>-5%)", desc: "Rebound Dolar AS setelah data ekonomi AS yang kuat.", factor: "Strong US Data, USD Rebound" },
+            { monthYear: "Mar 2023", trend: "Uptrend (>+8%)", desc: "Krisis Perbankan AS (SVB) meningkatkan Safe Haven Emas.", factor: "US Banking Crisis (SVB)" },
+            { monthYear: "Apr 2023", trend: "Ranging", desc: "Konsolidasi setelah lonjakan krisis perbankan, menanti keputusan Fed.", factor: "Post-Crisis Consolidation" },
+            { monthYear: "Mei 2023", trend: "Downtrend (>-2%)", desc: "Ketegangan batas utang AS sementara membatasi kenaikan.", factor: "US Debt Ceiling Concerns" },
+            { monthYear: "Jun 2023", trend: "Downtrend (>-4%)", desc: "The Fed mengisyaratkan kenaikan lebih lanjut, yield naik.", factor: "Hawkish Fed Outlook, Rising Yields" },
+            { monthYear: "Jul 2023", trend: "Uptrend (>+3%)", desc: "Dolar AS melemah menjelang data inflasi yang lebih rendah.", factor: "Weak USD, Lower Inflation Expected" },
+            { monthYear: "Agu 2023", trend: "Downtrend (>-2%)", desc: "Reaksi terhadap kenaikan imbal hasil US Treasury yang berkelanjutan.", factor: "Sustained US Treasury Yield Rise" },
+            { monthYear: "Sep 2023", trend: "Downtrend (>-5%)", desc: "Dolar mencapai titik tertinggi baru, Fed mempertahankan suku bunga tinggi.", factor: "Strong USD, High-for-Long Fed Policy" },
+            { monthYear: "Okt 2023", trend: "Uptrend (>+7%)", desc: "Konflik Hamas–Israel memicu ketidakpastian geopolitik.", factor: "Hamas-Israel Conflict" },
+            { monthYear: "Nov 2023", trend: "Ranging", desc: "Konsolidasi dan profit taking. Harga tetap didukung di atas $2000.", factor: "Profit Taking, Geopolitical Tension Support" },
+            { monthYear: "Des 2023", trend: "Uptrend (>+2%)", desc: "Fed mengisyaratkan pivot (pemotongan suku bunga) di 2024.", factor: "Fed Pivot Signal (Rate Cut Expectation)" },
+            { monthYear: "Jan 2024", trend: "Downtrend (>-2%)", desc: "Data NFP AS yang kuat menunda harapan pemotongan suku bunga.", factor: "Strong US NFP, Rate Cut Delay" },
+            { monthYear: "Feb 2024", trend: "Uptrend (>+3%)", desc: "Dukungan pembelian Bank Sentral Global, Dolar melemah.", factor: "Central Bank Buying, USD Weakness" },
+            { monthYear: "Mar 2024", trend: "Uptrend (>+8%)", desc: "Lonjakan harga didukung pembelian masif dari China.", factor: "China Buying, Record Highs" },
+            { monthYear: "Apr 2024", trend: "Uptrend (>+2%)", desc: "Bank Sentral Global terus membeli Emas. Ketegangan di Timur Tengah.", factor: "Global Central Bank Buying, Mideast Tensions" },
+            { monthYear: "Mei 2024", trend: "Downtrend (>-5%)", desc: "Kekhawatiran inflasi mereda dan pasar saham menguat.", factor: "Easing Inflation, Equity Market Strength" },
+            { monthYear: "Jun 2024", trend: "Ranging", desc: "Konsolidasi menjelang pemilu AS dan penantian kebijakan Fed.", factor: "US Election Uncertainty, Fed Policy Wait" },
+            { monthYear: "Jul 2024", trend: "Ranging", desc: "Fokus pada data ekonomi AS, Suku bunga stabil di tingkat tinggi.", factor: "Stable High Rates, US Economic Data" },
+            { monthYear: "Agu 2024", trend: "Uptrend (>+3%)", desc: "Data manufaktur global memburuk, Safe Haven kembali dicari.", factor: "Global Manufacturing Slowdown, Safe Haven Demand" },
+            { monthYear: "Sep 2024", trend: "Downtrend (>-3%)", desc: "Kekuatan Dolar jangka pendek menjelang pemilu.", factor: "Short-term USD Strength" },
+            { monthYear: "Okt 2024", trend: "Uptrend (>+5%)", desc: "Ketidakpastian geopolitik yang meningkat menjelang akhir tahun.", factor: "Heightened Geopolitical Uncertainty" },
+            // Simulasi Proyeksi 2025
+            { monthYear: "Jan 2025", trend: "Uptrend (>+7%)", desc: "Fed memulai serangkaian pemotongan suku bunga, Dolar jatuh.", factor: "Initial Fed Rate Cuts, USD Collapse" },
+            { monthYear: "Mar 2025", trend: "Uptrend (>+10%)", desc: "Stimulus Global masif untuk melawan perlambatan ekonomi.", factor: "Massive Global Stimulus" },
+            { monthYear: "Mei 2025", trend: "Ranging", desc: "Konsolidasi di level tertinggi, pasar mencerna suku bunga ultra rendah.", factor: "Consolidation at Highs, Ultra Low Rates" },
+            { monthYear: "Agu 2025", trend: "Uptrend (>+8%)", desc: "Inflasi melonjak tak terkendali akibat stimulus dan Dolar lemah.", factor: "Runaway Inflation, Extreme USD Weakness" },
+            { monthYear: "Okt 2025", trend: "Uptrend (>+10%)", desc: "Keputusan Pemotongan Suku Bunga Fed yang masif dan pelemahan Dolar global.", factor: "Aggressive Fed Rate Cuts, Global USD Weakness" }
+        ];
 
-            <div id="error-message" class="hidden p-3 bg-red-900 text-red-300 border-t border-red-700 font-bold">
-                <p class="text-sm"></p>
-            </div>
+        // DATA HARGA KONTINU (High/Low) - Ditambah data per bulan yang missing
+        const priceData = [
+            { month: "Des", year: 2019, high: 1553.11, low: 1450.40 },
+            { month: "Jan", year: 2020, high: 1611.38, low: 1516.34 },
+            { month: "Feb", year: 2020, high: 1690.00, low: 1563.00 }, // Tambahan
+            { month: "Mar", year: 2020, high: 1703.00, low: 1451.00 }, // Tambahan
+            { month: "Apr", year: 2020, high: 1789.00, low: 1668.00 }, // Tambahan
+            { month: "Mei", year: 2020, high: 1765.00, low: 1690.00 }, // Tambahan
+            { month: "Jun", year: 2020, high: 1795.00, low: 1680.00 }, // Tambahan
+            { month: "Jul", year: 2020, high: 1980.00, low: 1790.00 }, // Tambahan
+            { month: "Agu", year: 2020, high: 2073.68, low: 1863.00 },
+            { month: "Sep", year: 2020, high: 1970.00, low: 1848.00 }, // Tambahan
+            { month: "Okt", year: 2020, high: 1965.00, low: 1859.00 }, // Tambahan
+            { month: "Nov", year: 2020, high: 1965.00, low: 1764.00 }, // Tambahan
+            { month: "Des", year: 2020, high: 1906.00, low: 1790.00 }, // Tambahan
+            { month: "Jan", year: 2021, high: 1959.02, low: 1809.80 },
+            { month: "Feb", year: 2021, high: 1870.00, low: 1760.00 }, // Tambahan
+            { month: "Mar", year: 2021, high: 1755.00, low: 1676.80 },
+            { month: "Apr", year: 2021, high: 1798.00, low: 1678.00 }, // Tambahan
+            { month: "Mei", year: 2021, high: 1916.00, low: 1755.00 }, // Tambahan
+            { month: "Jun", year: 2021, high: 1909.00, low: 1750.00 }, // Tambahan
+            { month: "Jul", year: 2021, high: 1835.00, low: 1750.00 }, // Tambahan
+            { month: "Agu", year: 2021, high: 1831.00, low: 1680.00 }, // Tambahan
+            { month: "Sep", year: 2021, high: 1833.00, low: 1721.00 }, // Tambahan
+            { month: "Okt", year: 2021, high: 1813.00, low: 1721.00 }, // Tambahan
+            { month: "Nov", year: 2021, high: 1877.00, low: 1760.00 },
+            { month: "Des", year: 2021, high: 1815.00, low: 1753.00 }, // Tambahan
+            { month: "Jan", year: 2022, high: 1853.00, low: 1780.00 }, // Tambahan
+            { month: "Feb", year: 2022, high: 1974.30, low: 1779.30 },
+            { month: "Mar", year: 2022, high: 2070.00, low: 1890.00 }, // Tambahan
+            { month: "Apr", year: 2022, high: 1998.00, low: 1890.00 }, // Tambahan
+            { month: "Mei", year: 2022, high: 1909.00, low: 1785.00 }, // Tambahan
+            { month: "Jun", year: 2022, high: 1878.00, low: 1784.00 }, // Tambahan
+            { month: "Jul", year: 2022, high: 1770.00, low: 1680.00 }, // Tambahan
+            { month: "Agu", year: 2022, high: 1807.00, low: 1700.00 }, // Tambahan
+            { month: "Sep", year: 2022, high: 1735.00, low: 1614.00 },
+            { month: "Okt", year: 2022, high: 1729.00, low: 1615.00 }, // Tambahan
+            { month: "Nov", year: 2022, high: 1780.00, low: 1618.00 }, // Tambahan
+            { month: "Des", year: 2022, high: 1845.00, low: 1765.00 }, // Tambahan
+            { month: "Jan", year: 2023, high: 1960.00, low: 1800.00 }, // Tambahan
+            { month: "Feb", year: 2023, high: 1950.00, low: 1800.00 }, // Tambahan
+            { month: "Mar", year: 2023, high: 2010.50, low: 1809.80 },
+            { month: "Apr", year: 2023, high: 2048.00, low: 1970.00 }, // Tambahan
+            { month: "Mei", year: 2023, high: 2068.00, low: 1930.00 }, // Tambahan
+            { month: "Jun", year: 2023, high: 1985.00, low: 1900.00 }, // Tambahan
+            { month: "Jul", year: 2023, high: 1987.00, low: 1902.00 }, // Tambahan
+            { month: "Agu", year: 2023, high: 1980.00, low: 1885.00 }, // Tambahan
+            { month: "Sep", year: 2023, high: 1950.00, low: 1810.00 }, // Tambahan
+            { month: "Okt", year: 2023, high: 2009.00, low: 1810.00 },
+            { month: "Nov", year: 2023, high: 2015.00, low: 1934.00 }, // Tambahan
+            { month: "Des", year: 2023, high: 2146.70, low: 1974.70 },
+            { month: "Jan", year: 2024, high: 2085.00, low: 2005.00 }, // Tambahan
+            { month: "Feb", year: 2024, high: 2100.00, low: 2008.00 }, // Tambahan
+            { month: "Mar", year: 2024, high: 2225.00, low: 2020.00 }, // Tambahan
+            { month: "Apr", year: 2024, high: 2431.53, low: 2282.80 },
+            { month: "Mei", year: 2024, high: 2410.00, low: 2280.00 },
+            { month: "Jun", year: 2024, high: 2365.00, low: 2280.00 }, // Tambahan
+            { month: "Jul", year: 2024, high: 2380.00, low: 2305.00 }, // Tambahan
+            { month: "Agu", year: 2024, high: 2450.00, low: 2310.00 }, // Tambahan
+            { month: "Sep", year: 2024, high: 2420.00, low: 2300.00 }, // Tambahan
+            { month: "Okt", year: 2024, high: 2500.00, low: 2380.00 }, // Tambahan
+            { month: "Nov", year: 2024, high: 2550.00, low: 2400.00 }, // Tambahan
+            { month: "Des", year: 2024, high: 2700.00, low: 2500.00 }, // Tambahan
+            { month: "Jan", year: 2025, high: 2900.00, low: 2700.00 }, // Simulasi
+            { month: "Feb", year: 2025, high: 3200.00, low: 2800.00 }, // Simulasi
+            { month: "Mar", year: 2025, high: 3500.00, low: 3000.00 }, // Simulasi
+            { month: "Apr", year: 2025, high: 3700.00, low: 3200.00 }, // Simulasi
+            { month: "Mei", year: 2025, high: 3750.00, low: 3500.00 }, // Simulasi
+            { month: "Jun", year: 2025, high: 3800.00, low: 3600.00 }, // Simulasi
+            { month: "Jul", year: 2025, high: 3900.00, low: 3700.00 }, // Simulasi
+            { month: "Agu", year: 2025, high: 4100.00, low: 3800.00 }, // Simulasi
+            { month: "Sep", year: 2025, high: 4200.00, low: 4000.00 }, // Simulasi
+            { month: "Okt", year: 2025, high: 4380.07, low: 4010.50 } // Simulasi
+        ];
 
-            <form id="chatForm" class="p-4 bg-gray-900 border-t border-green-800">
-                <div class="flex space-x-3">
-                    <input
-                        id="chatInput"
-                        type="text"
-                        placeholder="ASK XAU/USD ANALYST..."
-                        class="flex-grow p-3 bg-gray-800 text-green-300 border border-green-700 rounded-full focus-ring-green transition duration-150 placeholder-green-600"
-                    />
-                    <button
-                        id="sendBtn"
-                        type="submit"
-                        class="p-3 bg-green-600 text-gray-900 rounded-full hover:bg-green-500 transition duration-200 shadow-md shadow-green-900/50 disabled:bg-green-900 disabled:text-green-700 disabled:cursor-not-allowed"
-                        title="Ketik pesan untuk mengirim"
-                    >
-                        <i data-lucide="send" class="w-6 h-6"></i>
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div id="data-column" class="lg:col-span-1 flex flex-col space-y-4 h-[80vh] transition-all duration-300">
-            
-            <button
-                id="toggleTableBtn"
-                class="w-full py-2 px-4 rounded-xl font-bold transition-all duration-300 bg-green-700 hover:bg-green-600 text-white shadow-green-900/50 shadow-lg border border-white/10"
-            >
-                <i data-lucide="maximize-2" class="inline w-4 h-4 mr-2"></i> Tampilkan Data Historis
-            </button>
-            
-            <div id="historicalDataTable" class="flex-grow hidden">
-                <div class="bg-gray-900 border border-green-900 rounded-xl shadow-2xl p-4 overflow-hidden h-full">
-                    <h2 class="text-xl font-bold mb-4 text-yellow-400 border-b border-green-800 pb-2">
-                        <i data-lucide="database" class="inline w-5 h-5 mr-2 text-green-400"></i> Data Kualitatif Historis
-                    </h2>
-                    <div class="overflow-y-auto h-[calc(100%-4rem)] custom-scrollbar">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="sticky top-0 bg-gray-900 border-b border-green-700 text-green-400">
-                                    <th class="p-2 text-left">Bulan & Tahun</th>
-                                    <th class="p-2 text-left">Tren Utama</th>
-                                    <th class="p-2 text-left">Faktor Pemicu (News)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dataTableBody">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="data-placeholder" class="flex-grow bg-gray-900 border border-green-900 rounded-xl shadow-2xl flex items-center justify-center p-4">
-                <p class="text-green-600">Tekan tombol di atas untuk menampilkan data historis.</p>
-            </div>
-        </div>
-    </main>
-</div>
-
-<script>
-// --- 0. SIMULASI ENVIRONMENT VARIABLE (TIDAK AMAN UNTUK PRODUKSI) ---
-// Ganti nilai ini dengan API Key Gemini Anda.
-// PENTING: Karena ini adalah frontend JS, kunci ini terekspos. 
-// Untuk keamanan, gunakan fungsi serverless.
-const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
-
-// --- 1. DATA HISTORIS XAU/USD ---
-const rawData = [
-    { monthYear: "Jan 2020", trend: "Uptrend (>+2%)", desc: "Ketegangan AS-Iran memicu Safe Haven. Bullish start.", factor: "AS-Iran Tension, Fed Rate Hold" },
-    { monthYear: "Feb 2020", trend: "Ranging", desc: "Kekuatan Dolar AS membatasi kenaikan. Aksi jual ringan di akhir bulan.", factor: "Strong USD, Pre-COVID uncertainty" },
-    { monthYear: "Mar 2020", trend: "Downtrend (>-5%)", desc: "Panic selling untuk likuiditas USD saat Covid-19 menyebar global.", factor: "COVID-19 Panic, Liquidity Grab" },
-    { monthYear: "Apr 2020", trend: "Uptrend (>+5%)", desc: "Stimulus masif The Fed dan kekhawatiran resesi mendorong harga.", factor: "Massive Fed Stimulus, Recession Fear" },
-    { monthYear: "Mei 2020", trend: "Ranging", desc: "Fokus pasar bergeser ke data ekonomi AS yang memburuk, Dolar menguat.", factor: "Deteriorating US Economy, USD strength" },
-    { monthYear: "Jun 2020", trend: "Uptrend (>+3%)", desc: "Emas sebagai lindung nilai inflasi. Suku bunga mendekati nol.", factor: "Inflation Hedge, Near-Zero Rates" },
-    { monthYear: "Jul 2020", trend: "Uptrend (>+10%)", desc: "Lonjakan kasus COVID-19, pelemahan Dolar AS, dan stimulus fiskal AS baru.", factor: "COVID Surge, Weak USD, Fiscal Stimulus" },
-    { monthYear: "Agu 2020", trend: "Downtrend (>-2%)", desc: "Profit taking setelah rekor harga tertinggi ($2073). Pasar menanti berita vaksin.", factor: "Profit Taking, Vaccine Anticipation" },
-    { monthYear: "Sep 2020", trend: "Downtrend (>-4%)", desc: "Penguatan Dolar AS dan keraguan atas stimulus fiskal baru.", factor: "Stronger USD, Fiscal Stimulus Doubt" },
-    { monthYear: "Okt 2020", trend: "Ranging", desc: "Volatilitas tinggi menjelang Pilpres AS. Harga konsolidasi.", factor: "US Election Volatility, Consolidation" },
-    { monthYear: "Jan 2021", trend: "Downtrend (>-3%)", desc: "Dolar AS rebound, harapan pemulihan global, dan yield obligasi yang naik.", factor: "USD Rebound, Recovery Hopes, Rising Yields" },
-    { monthYear: "Mar 2021", trend: "Downtrend (>-2%)", desc: "Peningkatan yield US Treasury menekan daya tarik Emas.", factor: "Rising US Treasury Yields" },
-    { monthYear: "Nov 2021", trend: "Uptrend (>+4%)", desc: "Kekhawatiran inflasi dan permintaan fisik yang kuat dari Asia.", factor: "Inflation Fear, Strong Physical Demand" },
-    { monthYear: "Feb 2022", trend: "Uptrend (>+6%)", desc: "Invasi Rusia ke Ukraina, memicu lonjakan Safe Haven.", factor: "Russia-Ukraine War (Safe Haven)" },
-    { monthYear: "Sep 2022", trend: "Downtrend (>-4%)", desc: "Suku bunga The Fed yang agresif dan penguatan Dolar AS.", factor: "Aggressive Fed Hikes, Strong USD" },
-    { monthYear: "Mar 2023", trend: "Uptrend (>+8%)", desc: "Krisis Perbankan AS (SVB) meningkatkan Safe Haven Emas.", factor: "US Banking Crisis (SVB)" },
-    { monthYear: "Okt 2023", trend: "Uptrend (>+7%)", desc: "Konflik Hamas–Israel memicu ketidakpastian geopolitik.", factor: "Hamas-Israel Conflict" },
-    { monthYear: "Apr 2024", trend: "Uptrend (>+2%)", desc: "Bank Sentral Global terus membeli Emas. Ketegangan di Timur Tengah.", factor: "Global Central Bank Buying, Mideast Tensions" },
-    { monthYear: "Mei 2024", trend: "Downtrend (>-5%)", desc: "Kekhawatiran inflasi mereda dan pasar saham menguat.", factor: "Easing Inflation, Equity Market Strength" },
-    { monthYear: "Okt 2025", trend: "Uptrend (>+10%)", desc: "Keputusan Pemotongan Suku Bunga Fed yang masif dan pelemahan Dolar global.", factor: "Massive Fed Rate Cuts, Global USD Weakness" }
-];
-
-const priceData = [
-    { month: "Des 2019", high: 1553.11, low: 1450.40 },
-    { month: "Jan 2020", high: 1611.38, low: 1516.34 },
-    { month: "Agu 2020", high: 2073.68, low: 1863.00 },
-    { month: "Jan 2021", high: 1959.02, low: 1809.80 },
-    { month: "Mar 2021", high: 1755.00, low: 1676.80 },
-    { month: "Feb 2022", high: 1974.30, low: 1779.30 },
-    { month: "Mar 2023", high: 2010.50, low: 1809.80 },
-    { month: "Des 2023", high: 2146.70, low: 1974.70 },
-    { month: "Apr 2024", high: 2431.53, low: 2282.80 },
-    { month: "Okt 2025", high: 4380.07, low: 4010.50 }
-];
-
-const MODEL_NAME = 'gemini-2.5-flash-preview-09-2025';
-const GEMINI_API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
-const MAX_RETRIES = 3;
-
-// Menggabungkan data menjadi string JSON untuk dikirim sebagai konteks ke AI
-const xauUsdDataString = JSON.stringify({ rawData, priceData }, null, 2);
-
-// Instruksi Sistem untuk memandu perilaku AI
-const SYSTEM_INSTRUCTION = {
-    parts: [{
-        text: `
+        // --- PENGATURAN AI ---
+        const xauUsdDataString = JSON.stringify({ rawData, priceData }, null, 2);
+        const SYSTEM_INSTRUCTION = {
+            parts: [{
+                text: `
 Anda adalah seorang analis keuangan ahli di pasar Emas (XAU/USD). Tugas Anda adalah menjawab pertanyaan pengguna berdasarkan data historis dan musiman XAU/USD yang disediakan di bawah ini.
 
-1.  Gunakan data ini untuk memberikan analisis yang terperinci dan berwawasan.
-2.  Jangan pernah menciptakan data atau fakta yang tidak ada dalam konteks yang diberikan.
-3.  Berikan jawaban yang ringkas, profesional, dan dalam Bahasa Indonesia, dengan gaya penulisan seperti terminal analisis.
+1. Gunakan data ini untuk memberikan analisis yang terperinci dan berwawasan.
+2. Jangan pernah menciptakan data atau fakta yang tidak ada dalam konteks yang diberikan.
+3. Berikan jawaban yang ringkas, profesional, dan dalam Bahasa Indonesia, dengan gaya penulisan seperti terminal analisis.
 
 DATA XAU/USD (Januari 2020 - Oktober 2025):
 ${xauUsdDataString}
 `
-    }]
-};
-
-// --- 2. Variabel dan Elemen DOM ---
-const elements = {
-    chatForm: document.getElementById('chatForm'),
-    chatInput: document.getElementById('chatInput'),
-    sendBtn: document.getElementById('sendBtn'),
-    messagesContainer: document.getElementById('messagesContainer'),
-    messagesEndRef: document.getElementById('messages-end-ref'),
-    initialMessage: document.getElementById('initial-message'),
-    errorMessage: document.getElementById('error-message'),
-    dataTableBody: document.getElementById('dataTableBody'),
-    toggleTableBtn: document.getElementById('toggleTableBtn'),
-    historicalDataTable: document.getElementById('historicalDataTable'),
-    dataPlaceholder: document.getElementById('data-placeholder'),
-    maximizeChatBtn: document.getElementById('maximizeChatBtn'),
-    chatContainer: document.getElementById('chat-container'),
-    dataColumn: document.getElementById('data-column'),
-    mainContent: document.getElementById('main-content'),
-};
-
-let messages = [];
-let state = {
-    isLoading: false,
-    isTableVisible: false,
-    isChatMaximized: false,
-};
-
-// --- 3. FUNGSI UTILITAS UI ---
-
-const updateLucideIcons = () => {
-    if (window.lucideCreateIcons) {
-        window.lucideCreateIcons();
-    }
-};
-
-const scrollToBottom = () => {
-    elements.messagesEndRef.scrollIntoView({ behavior: 'smooth' });
-};
-
-const showLoadingIndicator = () => {
-    const loadingHtml = `
-        <div id="loading-indicator" class="flex justify-start">
-            <div class="bg-gray-800 text-green-500 p-3 rounded-tr-xl rounded-b-xl shadow-md flex items-center mb-4 border border-green-900">
-                <i data-lucide="loader-2" class="animate-spin w-4 h-4 mr-2"></i>
-                ANALYZING DATA...
-            </div>
-        </div>
-    `;
-    elements.messagesContainer.insertAdjacentHTML('beforeend', loadingHtml);
-    updateLucideIcons();
-    scrollToBottom();
-};
-
-const hideLoadingIndicator = () => {
-    const indicator = document.getElementById('loading-indicator');
-    if (indicator) {
-        indicator.remove();
-    }
-};
-
-const showError = (message) => {
-    elements.errorMessage.querySelector('p').textContent = message;
-    elements.errorMessage.classList.remove('hidden');
-};
-
-const hideError = () => {
-    elements.errorMessage.classList.add('hidden');
-};
-
-const createMessageBubble = (role, text) => {
-    const isUser = role === 'user';
-    // Gunakan <pre> untuk mempertahankan format spasi/baris yang dihasilkan AI
-    const formattedText = isUser ? text : text.replace(/`/g, '\\`'); 
-    
-    const bgColor = isUser ? 'bg-green-700 text-white' : 'bg-gray-800 text-green-400 border border-green-900';
-    const alignment = isUser ? 'justify-end' : 'justify-start';
-    const borderRadius = isUser ? 'rounded-tl-xl rounded-b-xl' : 'rounded-tr-xl rounded-b-xl';
-
-    const bubbleHtml = `
-        <div class="flex w-full ${alignment}">
-            <div 
-                class="max-w-xs sm:max-w-lg p-3 sm:p-4 mb-4 ${bgColor} ${borderRadius} transition-all duration-300 shadow-xl shadow-black/50"
-            >
-                <p class="font-bold text-sm mb-1">${isUser ? 'USER >' : 'ANALYST >'}</p>
-                <pre class="whitespace-pre-wrap font-inherit">${formattedText}</pre>
-            </div>
-        </div>
-    `;
-    
-    if (elements.initialMessage) {
-        elements.initialMessage.style.display = 'none';
-    }
-
-    elements.messagesContainer.insertAdjacentHTML('beforeend', bubbleHtml);
-    scrollToBottom();
-};
-
-const renderHistoricalData = () => {
-    const html = rawData.map((item, index) => {
-        const rowClass = index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900';
-        let trendClass = 'text-blue-400';
-        if (item.trend.includes('Uptrend')) {
-            trendClass = 'text-green-500';
-        } else if (item.trend.includes('Downtrend')) {
-            trendClass = 'text-red-500';
-        }
-
-        return `
-            <tr class="${rowClass} hover:bg-green-950 transition-colors duration-150">
-                <td class="p-2 text-green-300">${item.monthYear}</td>
-                <td class="p-2 ${trendClass}">${item.trend}</td>
-                <td class="p-2 text-gray-300 text-xs">${item.factor}</td>
-            </tr>
-        `;
-    }).join('');
-
-    elements.dataTableBody.innerHTML = html;
-    updateLucideIcons(); 
-};
-
-// --- 4. FUNGSI LOGIKA STATE ---
-
-const updateFormState = () => {
-    const inputFilled = elements.chatInput.value.trim().length > 0;
-    
-    // Periksa apakah API Key diisi
-    const apiKeyPresent = GEMINI_API_KEY && GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE";
-    
-    elements.chatInput.disabled = state.isLoading || !apiKeyPresent;
-    elements.sendBtn.disabled = state.isLoading || !inputFilled || !apiKeyPresent;
-
-    if (!apiKeyPresent) {
-         elements.sendBtn.title = "Harap masukkan GEMINI_API_KEY di dalam script";
-         elements.chatInput.placeholder = "API KEY BELUM DISET...";
-    } else if (state.isLoading) {
-         elements.sendBtn.title = "Sedang menganalisis...";
-    } else if (!inputFilled) {
-         elements.sendBtn.title = "Ketik pesan untuk mengirim";
-    } else {
-         elements.sendBtn.title = "Kirim Pesan";
-         elements.chatInput.placeholder = "ASK XAU/USD ANALYST...";
-    }
-};
-
-const toggleTableVisibility = () => {
-    state.isTableVisible = !state.isTableVisible;
-    
-    if (state.isTableVisible) {
-        elements.historicalDataTable.classList.remove('hidden');
-        elements.dataPlaceholder.classList.add('hidden');
-        elements.toggleTableBtn.innerHTML = '<i data-lucide="minimize-2" class="inline w-4 h-4 mr-2"></i> Sembunyikan Data Historis';
-        elements.toggleTableBtn.classList.replace('bg-green-700', 'bg-red-700');
-        elements.toggleTableBtn.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
-    } else {
-        elements.historicalDataTable.classList.add('hidden');
-        elements.dataPlaceholder.classList.remove('hidden');
-        elements.toggleTableBtn.innerHTML = '<i data-lucide="maximize-2" class="inline w-4 h-4 mr-2"></i> Tampilkan Data Historis';
-        elements.toggleTableBtn.classList.replace('bg-red-700', 'bg-green-700');
-        elements.toggleTableBtn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
-    }
-    updateLucideIcons();
-};
-
-const toggleChatMaximize = () => {
-    state.isChatMaximized = !state.isChatMaximized;
-    
-    if (state.isChatMaximized) {
-        elements.mainContent.classList.replace('lg:grid-cols-3', 'grid-cols-1');
-        elements.chatContainer.classList.replace('lg:col-span-2', 'lg:col-span-3');
-        elements.chatContainer.classList.replace('h-[80vh]', 'h-[85vh]');
-        elements.dataColumn.classList.add('hidden'); 
-        elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'minimize-2');
-        elements.maximizeChatBtn.title = 'Perkecil Tampilan';
-    } else {
-        elements.mainContent.classList.replace('grid-cols-1', 'lg:grid-cols-3');
-        elements.chatContainer.classList.replace('lg:col-span-3', 'lg:col-span-2');
-        elements.chatContainer.classList.replace('h-[85vh]', 'h-[80vh]');
-        elements.dataColumn.classList.remove('hidden'); 
-        elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'maximize-2');
-        elements.maximizeChatBtn.title = 'Perbesar Chat';
-    }
-    updateLucideIcons();
-    scrollToBottom();
-};
-
-
-// --- 5. FUNGSI API & HANDLER UTAMA ---
-
-/** * Memanggil API Gemini dengan Exponential Backoff.
- * systemInstruction ditempatkan di root payload.
- */
-const callGeminiApi = async (contents, retryCount = 0) => {
-    try {
-        const apiUrl = `${GEMINI_API_BASE_URL}?key=${GEMINI_API_KEY}`;
-        
-        const payload = {
-            contents: contents,
-            // Menggunakan systemInstruction yang sudah didefinisikan sebelumnya
-            systemInstruction: SYSTEM_INSTRUCTION, 
+            }]
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
+        // --- Variabel dan Elemen DOM ---
+        let messages = [];
+        let state = {
+            isLoading: false
+        };
+        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-        if (!response.ok) {
-            // Handle Rate Limit dengan Exponential Backoff
-            if (response.status === 429 && retryCount < MAX_RETRIES) {
-                const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
-                console.warn(`Rate limit (429). Retrying in ${delay.toFixed(0)}ms...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return callGeminiApi(contents, retryCount + 1);
-            }
+    </script>
+
+    <header class="header-section text-center">
+        <div class="container-xl">
+            <h1 class="fw-bold">XAU/USD INTEGRATED AI ANALYST DASHBOARD</h1>
+            <p class="lead">Konsol Interaktif AI Chat & Visualisasi Data Historis | Powered by <span class="text-bold-neon">Gemini</span></p>
+        </div>
+    </header>
+
+    <main class="container-xl">
+        <div class="row">
             
-            const errorData = await response.json();
-            throw new Error(`Gemini API Error: ${response.status} - ${errorData.error?.message || 'Gagal memanggil API.'}`);
+            <div class="col-lg-6">
+                <div id="chat-container" class="content-card h-100 p-0 flex flex-col overflow-hidden">
+                    
+                    <div class="p-3 border-b border-green-800 bg-gray-900 rounded-t-sm">
+                        <h2 class="text-xl font-bold text-green-400 flex items-center mb-0">
+                            <i data-lucide="message-square" class="w-5 h-5 mr-2"></i> Gemini Analysis Console
+                        </h2>
+                    </div>
+
+                    <div id="messagesContainer" class="flex-grow p-4 overflow-y-auto custom-scrollbar" style="min-height: 400px; max-height: 550px;">
+                        <div id="initial-message" class="flex flex-col items-center justify-center h-full text-center text-green-600">
+                            <p class="text-lg mb-2">ACCESS GRANTED. MEMORY CONTEXT LOADED.</p>
+                            <p class="text-sm">
+                                Tanyakan tentang tren, high/low, atau faktor pemicu Emas dari tahun 2020 hingga 2025.
+                            </p>
+                        </div>
+                        <div id="messages-end-ref"></div>
+                    </div>
+
+                    <div id="error-message" class="hidden p-3 bg-red-900 text-red-300 border-t border-red-700 font-bold">
+                        <p class="text-sm"></p>
+                    </div>
+
+                    <form id="chatForm" class="p-3 bg-gray-900 border-t border-green-800">
+                        <div class="flex space-x-3">
+                            <input
+                                id="chatInput"
+                                type="text"
+                                placeholder="ASK XAU/USD ANALYST..."
+                                class="chat-input flex-grow"
+                            />
+                            <button
+                                id="sendBtn"
+                                type="submit"
+                                class="send-btn p-3 rounded-full shadow-md shadow-green-900/50"
+                                title="Ketik pesan untuk mengirim"
+                            >
+                                <i data-lucide="send" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                
+                <div class="content-card">
+                    <h2 class="gold-title">Heatmap: Tren Historis Bulanan (Tahun-ke-Tahun)</h2>
+                    <p class="text-muted">U = Kenaikan, D = Penurunan, R = Ranging. Klik cell untuk detail.</p>
+                    <div class="heatmap-container">
+                        <table class="heatmap-table" id="heatmapTable"></table>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="content-card">
+                            <h2 class="gold-title" style="font-size: 1rem;">Frekuensi Tren Musiman</h2>
+                            <div style="height: 250px;"><canvas id="seasonalityChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="content-card">
+                            <h2 class="gold-title" style="font-size: 1rem;">Continuous High/Low Price</h2>
+                            <div style="height: 250px;"><canvas id="lineChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4">
+                <div class="content-card">
+                    <h2 class="gold-title">Detail Data Historis & Narasi Lengkap (Raw Log)</h2>
+                    <p class="text-muted">Tabel penuh dari data historis yang digunakan oleh AI Analyst dan Heatmap.</p>
+                    <div class="table-data-container" style="max-height: 350px;">
+                        <table class="table table-sm table-striped table-hover table-data-full" id="dataTable"></table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+    </main>
+    
+    <div class="modal fade" id="trendModal" tabindex="-1" aria-labelledby="trendModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalMonthYear">Detail Analisis</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Kondisi Utama:</strong> <span id="modalTrend" class="fw-bold"></span></p>
+                    <p><strong>Keterangan Singkat:</strong> <span id="modalDesc"></span></p>
+                    <p><strong>Faktor Pemicu (News):</strong> <span id="modalFactor"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-3 mt-5" style="background-color: #1e1e1e; border-top: 1px dashed #333333;">
+        <p style="color: #00ff41; margin-bottom: 0;">[SYSTEM STATUS: OK] &copy; 2025 Integrated Analysis Dashboard.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // --- CHAT LOGIC (Dari Web 1, Disesuaikan) ---
+        const elements = {
+            chatForm: document.getElementById('chatForm'),
+            chatInput: document.getElementById('chatInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            messagesContainer: document.getElementById('messagesContainer'),
+            messagesEndRef: document.getElementById('messages-end-ref'),
+            initialMessage: document.getElementById('initial-message'),
+            errorMessage: document.getElementById('error-message'),
+        };
+
+        const scrollToBottom = () => {
+            elements.messagesEndRef.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        const updateLucideIcons = () => {
+            if (window.lucideCreateIcons) {
+                window.lucideCreateIcons();
+            }
+        };
+
+        const showLoadingIndicator = () => {
+            const loadingHtml = `
+                <div id="loading-indicator" class="flex justify-start">
+                    <div class="bg-gray-800 text-green-500 p-3 rounded-tr-xl rounded-b-xl shadow-md flex items-center mb-4 border border-green-900">
+                        <i data-lucide="loader-2" class="animate-spin w-4 h-4 mr-2"></i>
+                        ANALYZING DATA...
+                    </div>
+                </div>
+            `;
+            elements.messagesContainer.insertAdjacentHTML('beforeend', loadingHtml);
+            updateLucideIcons();
+            scrollToBottom();
+        };
+
+        const hideLoadingIndicator = () => {
+            const indicator = document.getElementById('loading-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        };
+
+        const showError = (message) => {
+            elements.errorMessage.querySelector('p').textContent = message;
+            elements.errorMessage.classList.remove('hidden');
+        };
+
+        const hideError = () => {
+            elements.errorMessage.classList.add('hidden');
+        };
+
+        const createMessageBubble = (role, text) => {
+            const isUser = role === 'user';
+            const formattedText = isUser ? text : text.replace(/`/g, '\\`');
+            const bgColor = isUser ? 'user-bubble text-white' : 'model-bubble';
+            const alignment = isUser ? 'justify-end' : 'justify-start';
+            const borderRadius = isUser ? '' : ''; // Diatur di CSS
+            
+            const bubbleHtml = `
+                <div class="flex w-full ${alignment}">
+                    <div 
+                        class="max-w-xs sm:max-w-md p-3 sm:p-4 mb-4 ${bgColor} transition-all duration-300 shadow-xl shadow-black/50"
+                    >
+                        <p class="font-bold text-sm mb-1">${isUser ? 'USER >' : 'ANALYST >'}</p>
+                        <pre class="whitespace-pre-wrap font-inherit">${formattedText}</pre>
+                    </div>
+                </div>
+            `;
+            
+            if (elements.initialMessage) {
+                elements.initialMessage.style.display = 'none';
+            }
+
+            elements.messagesContainer.insertAdjacentHTML('beforeend', bubbleHtml);
+            scrollToBottom();
+        };
+
+        const updateFormState = () => {
+            const inputFilled = elements.chatInput.value.trim().length > 0;
+            const apiKeyPresent = GEMINI_API_KEY && GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE";
+            
+            elements.chatInput.disabled = state.isLoading || !apiKeyPresent;
+            elements.sendBtn.disabled = state.isLoading || !inputFilled || !apiKeyPresent;
+
+            if (!apiKeyPresent) {
+                elements.sendBtn.title = "Harap masukkan GEMINI_API_KEY di dalam script";
+                elements.chatInput.placeholder = "API KEY BELUM DISET...";
+            } else if (state.isLoading) {
+                elements.sendBtn.title = "Sedang menganalisis...";
+            } else if (!inputFilled) {
+                elements.sendBtn.title = "Ketik pesan untuk mengirim";
+            } else {
+                elements.sendBtn.title = "Kirim Pesan";
+                elements.chatInput.placeholder = "ASK XAU/USD ANALYST...";
+            }
+        };
+
+        const callGeminiApi = async (contents, retryCount = 0) => {
+            try {
+                const apiUrl = `${GEMINI_API_BASE_URL}?key=${GEMINI_API_KEY}`;
+                
+                const payload = {
+                    contents: contents,
+                    systemInstruction: SYSTEM_INSTRUCTION,
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retryCount < MAX_RETRIES) {
+                        const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+                        console.warn(`Rate limit (429). Retrying in ${delay.toFixed(0)}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiApi(contents, retryCount + 1);
+                    }
+                    
+                    const errorData = await response.json();
+                    throw new Error(`Gemini API Error: ${response.status} - ${errorData.error?.message || 'Gagal memanggil API.'}`);
+                }
+
+                const result = await response.json();
+                const modelResponseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!modelResponseText) {
+                    throw new Error("Respon dari model kosong atau tidak terduga.");
+                }
+
+                messages.push({ role: 'model', text: modelResponseText });
+                createMessageBubble('model', modelResponseText);
+                hideError();
+
+            } catch (err) {
+                console.error("Kesalahan dalam pengiriman pesan:", err);
+                showError(err.message);
+            } finally {
+                state.isLoading = false;
+                hideLoadingIndicator();
+                updateFormState();
+            }
+        };
+
+        const sendMessage = async (e) => {
+            e.preventDefault();
+            const userMessage = elements.chatInput.value.trim();
+
+            if (!userMessage || state.isLoading || !GEMINI_API_KEY) return;
+            if (GEMINI_API_KEY === "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU") {
+                 showError("PERINGATAN KRITIS: Harap ganti API Key placeholder.");
+            }
+
+            elements.chatInput.value = '';
+            hideError();
+            state.isLoading = true;
+            updateFormState();
+            
+            messages.push({ role: 'user', text: userMessage });
+            createMessageBubble('user', userMessage);
+            showLoadingIndicator();
+
+            const apiContents = messages.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }],
+            }));
+
+            await callGeminiApi(apiContents);
+        };
+        // --- AKHIR CHAT LOGIC ---
+
+
+        // --- CHART & VISUALIZATION LOGIC (Dari Web 2) ---
+
+        // 1. Fungsi untuk menggambar Heatmap Interaktif
+        function drawHeatmap() {
+            const heatmapTable = document.getElementById('heatmapTable');
+            // Ekstrak tahun dari rawData, urutkan, dan hilangkan duplikasi
+            const allYears = rawData.map(d => d.monthYear.substring(d.monthYear.length - 4));
+            const years = [...new Set(allYears)].sort();
+            
+            let html = '<thead><tr><th style="min-width: 60px;">Tahun</th>';
+            monthLabels.forEach(month => { html += `<th>${month}</th>`; });
+            html += '</tr></thead><tbody>';
+
+            years.forEach(year => {
+                html += `<tr><th class="text-center">${year}</th>`;
+                monthLabels.forEach(month => {
+                    const monthYear = `${month} ${year}`;
+                    let trendClass = 'trend-range'; 
+                    let trendDisplay = 'R';
+                    const specificData = rawData.find(d => d.monthYear === monthYear); 
+                    
+                    if (!specificData) {
+                        html += `<td style="background-color: #111111; cursor: default; color: #333;">-</td>`;
+                        return;
+                    }
+
+                    const trend = specificData.trend.toLowerCase();
+                    
+                    if (trend.includes('uptrend') || trend.includes('rebound') || trend.includes('bullish')) {
+                        trendClass = 'trend-up'; trendDisplay = 'U';
+                    } else if (trend.includes('downtrend') || trend.includes('koreksi') || trend.includes('bearish') || trend.includes('crash')) {
+                        trendClass = 'trend-down'; trendDisplay = 'D';
+                    } else {
+                        trendClass = 'trend-range'; trendDisplay = 'R';
+                    }
+
+                    html += `<td class="${trendClass}" data-monthyear="${specificData.monthYear}" data-trend="${specificData.trend}" data-desc="${specificData.desc}" data-factor="${specificData.factor}">${trendDisplay}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            heatmapTable.innerHTML = html;
+
+            // Tambahkan event listener untuk Modal
+            const trendModalInstance = new bootstrap.Modal(document.getElementById('trendModal'));
+            heatmapTable.querySelectorAll('td').forEach(cell => {
+                if (cell.dataset.monthyear) { // Pastikan cell memiliki data
+                    cell.addEventListener('click', function() {
+                        document.getElementById('modalMonthYear').textContent = `Detail Analisis: ${this.dataset.monthyear}`;
+                        document.getElementById('modalTrend').textContent = this.dataset.trend;
+                        
+                        const modalTrendSpan = document.getElementById('modalTrend');
+                        modalTrendSpan.className = 'fw-bold'; 
+                        if (this.classList.contains('trend-up')) {
+                            modalTrendSpan.style.color = '#00ff41'; 
+                        } else if (this.classList.contains('trend-down')) {
+                            modalTrendSpan.style.color = '#ff6347'; 
+                        } else {
+                            modalTrendSpan.style.color = '#0dcaf0'; 
+                        }
+
+                        document.getElementById('modalDesc').textContent = this.dataset.desc;
+                        document.getElementById('modalFactor').textContent = this.dataset.factor;
+
+                        trendModalInstance.show();
+                    });
+                }
+            });
+        }
+        
+        // 2. Fungsi untuk menggambar Bar Chart Frekuensi Tren
+        function drawBarChart() {
+            const monthlyCounts = {};
+            monthLabels.forEach(m => monthlyCounts[m] = { Up: 0, Down: 0, Range: 0 });
+
+            rawData.forEach(item => {
+                const month = item.monthYear.substring(0, 3);
+                const trend = item.trend.toLowerCase();
+                
+                if (monthLabels.includes(month)) { // Pastikan bulan valid
+                    if (trend.includes('uptrend') || trend.includes('rebound') || trend.includes('bullish')) {
+                        monthlyCounts[month].Up++;
+                    } else if (trend.includes('downtrend') || trend.includes('koreksi') || trend.includes('bearish') || trend.includes('crash')) {
+                        // Menggunakan nilai negatif untuk Down (agar terlihat di bawah sumbu X)
+                        monthlyCounts[month].Down++; 
+                    } else {
+                        monthlyCounts[month].Range++;
+                    }
+                }
+            });
+
+            const labels = monthLabels; // Urutan bulan yang benar
+            const upData = labels.map(m => monthlyCounts[m].Up);
+            const downData = labels.map(m => monthlyCounts[m].Down * -1); 
+            const rangeData = labels.map(m => monthlyCounts[m].Range);
+
+            const ctx = document.getElementById('seasonalityChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Kenaikan (U)', data: upData, backgroundColor: '#008000', stack: 'Stack 0' },
+                        { label: 'Penurunan (D)', data: downData, backgroundColor: '#8b0000', stack: 'Stack 0' },
+                        { label: 'Ranging (R)', data: rangeData, backgroundColor: '#003366', stack: 'Stack 0' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { labels: { color: '#e0e0e0', font: { family: 'Roboto Mono' } } }, 
+                        title: { display: false } 
+                    },
+                    scales: {
+                        x: { stacked: true, ticks: { color: '#00ff41' }, grid: { color: '#333' } },
+                        y: { 
+                            stacked: true, title: { display: true, text: 'Jumlah Tahun', color: '#aaaaaa' },
+                            ticks: { color: '#00ff41', callback: function(value) { return Math.abs(value); } },
+                            grid: { color: '#333' }
+                        }
+                    }
+                }
+            });
         }
 
-        const result = await response.json();
-        const modelResponseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        // 3. Mengambil data High/Low secara Kontinu
+        function getContinousPriceData() {
+            const labels = priceData.map(d => `${d.month} ${d.year.toString().slice(-2)}`);
+            const highData = priceData.map(d => d.high);
+            const lowData = priceData.map(d => d.low);
 
-        if (!modelResponseText) {
-            throw new Error("Respon dari model kosong atau tidak terduga.");
+            return { labels, highData, lowData };
         }
 
-        // Simpan dan tampilkan respons model
-        messages.push({ role: 'model', text: modelResponseText });
-        createMessageBubble('model', modelResponseText);
-        hideError();
+        // 4. Menggambar Line Chart Kontinu (Range Chart)
+        function drawLineChartContinous(data) {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels, 
+                    datasets: [
+                        {
+                            label: 'Monthly High Price',
+                            data: data.highData,
+                            borderColor: '#ffc107', 
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            fill: false,
+                            tension: 0.3, 
+                            pointRadius: 1,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Monthly Low Price',
+                            data: data.lowData,
+                            borderColor: '#0dcaf0', 
+                            backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                            fill: '-1', 
+                            tension: 0.3,
+                            pointRadius: 1,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { labels: { color: '#e0e0e0', font: { family: 'Roboto Mono' } } },
+                        tooltip: { mode: 'index', intersect: false, bodyFont: { family: 'Roboto Mono' } }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                color: '#00ff41',
+                                // Hanya tampilkan label tahunan (setiap 12 data)
+                                callback: function(index) {
+                                    return index % 12 === 0 ? this.getLabelForValue(index) : null; 
+                                }
+                            }, 
+                            grid: { color: '#333' } 
+                        },
+                        y: {
+                            title: { display: true, text: 'Harga XAU/USD (USD)', color: '#aaaaaa' },
+                            ticks: { color: '#00ff41' },
+                            grid: { color: '#333' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 5. Fungsi untuk mengisi Tabel Lengkap
+        function populateTable() {
+            const tableBody = document.getElementById('dataTable');
+            tableBody.innerHTML = `
+                <thead><tr><th scope="col" style="min-width: 100px;">Bulan & Tahun</th><th scope="col" style="min-width: 150px;">Kondisi Utama</th><th scope="col">Keterangan Singkat</th><th scope="col">Faktor Pemicu Utama (News)</th></tr></thead>
+                <tbody></tbody>
+            `;
+            const tableBodyContent = tableBody.getElementsByTagName('tbody')[0];
 
-    } catch (err) {
-        console.error("Kesalahan dalam pengiriman pesan:", err);
-        showError(err.message);
-    } finally {
-        state.isLoading = false;
-        hideLoadingIndicator();
-        updateFormState();
-    }
-};
+            rawData.forEach(item => {
+                const row = tableBodyContent.insertRow();
+                let trendClass = 'text-white';
+                if (item.trend.toLowerCase().includes('uptrend')) {
+                    trendClass = 'text-success'; // Hijau Bootstrap
+                } else if (item.trend.toLowerCase().includes('downtrend') || item.trend.toLowerCase().includes('crash')) {
+                    trendClass = 'text-danger'; // Merah Bootstrap
+                } else if (item.trend.toLowerCase().includes('ranging') || item.trend.toLowerCase().includes('konsolidasi') || item.trend.toLowerCase().includes('volatil')) {
+                    trendClass = 'text-info'; // Biru Muda Bootstrap
+                }
 
-/** Handler untuk pengiriman pesan */
-const sendMessage = async (e) => {
-    e.preventDefault();
-    const userMessage = elements.chatInput.value.trim();
+                row.innerHTML = `
+                    <td>${item.monthYear}</td>
+                    <td class="${trendClass}">${item.trend}</td>
+                    <td>${item.desc}</td>
+                    <td>${item.factor}</td>
+                `;
+            });
+        }
 
-    if (!userMessage || state.isLoading || !GEMINI_API_KEY) return;
-    if (GEMINI_API_KEY === "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU") {
-         showError("Peringatan: Harap ganti API Key placeholder di awal script.");
-         // Biarkan eksekusi berlanjut untuk tujuan demonstrasi, tapi idealnya dihentikan
-         // return; 
-    }
 
-    elements.chatInput.value = '';
-    hideError();
-    state.isLoading = true;
-    updateFormState();
-    
-    // Simpan dan tampilkan pesan pengguna
-    messages.push({ role: 'user', text: userMessage });
-    createMessageBubble('user', userMessage);
-    showLoadingIndicator();
+        // INISIALISASI
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inisialisasi Chat
+            elements.chatForm.addEventListener('submit', sendMessage);
+            elements.chatInput.addEventListener('input', updateFormState);
+            updateFormState();
+            
+            // Inisialisasi Visualisasi
+            drawHeatmap();
+            drawBarChart();
+            populateTable();
+            const continousData = getContinousPriceData();
+            drawLineChartContinous(continousData);
 
-    // Siapkan konten untuk API (riwayat chat)
-    const apiContents = messages.map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }],
-    }));
-
-    await callGeminiApi(apiContents);
-};
-
-// --- 6. INISIALISASI ---
-
-const initialize = () => {
-    // 1. Render data tabel
-    renderHistoricalData();
-    
-    // 2. Setup Event Listeners
-    elements.chatForm.addEventListener('submit', sendMessage);
-    elements.chatInput.addEventListener('input', updateFormState);
-    elements.toggleTableBtn.addEventListener('click', toggleTableVisibility);
-    elements.maximizeChatBtn.addEventListener('click', toggleChatMaximize);
-    
-    // 3. Update status form awal
-    updateFormState(); 
-};
-
-// Jalankan inisialisasi setelah DOM dimuat
-document.addEventListener('DOMContentLoaded', initialize);
-</script>
+            // Perbaikan tampilan awal ikon Lucide
+            updateLucideIcons();
+        });
+    </script>
 
 </body>
 </html>
