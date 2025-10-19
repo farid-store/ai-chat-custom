@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 // ************* GANTI DENGAN API KEY ANDA *************
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "YOUR_GEMINI_API_KEY_HERE"; 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
 // *******************************************************
 
 if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE" || !GEMINI_API_KEY) {
