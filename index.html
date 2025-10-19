@@ -843,89 +843,99 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Se
         }
 
         // 6. Gemini Chat Implementation
-        async function setupGeminiChat() {
-            // **PENTING: GANTI INI DENGAN API KEY ANDA YANG SEBENARNYA**
-            const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU"; 
-            
-            if (GEMINI_API_KEY === "GANTI_DENGAN_API_KEY_ANDA_DI_SINI") {
-                document.getElementById('chatStatus').textContent = "ERROR: Silakan ganti GEMINI_API_KEY.";
-                return;
-            }
+async function setupGeminiChat() {
+    // **PENTING: GANTI INI DENGAN API KEY ANDA YANG SEBENARNYA**
+    // JANGAN PERNAH MENYIMPAN API KEY ASLI DI KODE PUBLIK!
+    const GEMINI_API_KEY = "GANTI_DENGAN_API_KEY_ANDA_DI_SINI"; 
+    
+    const chatOutput = document.getElementById('chatOutput');
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    const chatStatus = document.getElementById('chatStatus');
 
-            const chatOutput = document.getElementById('chatOutput');
-            const chatInput = document.getElementById('chatInput');
-            const chatSendBtn = document.getElementById('chatSendBtn');
-            const chatStatus = document.getElementById('chatStatus');
+    // SOLUSI UNTUK TYPERROR: Cek apakah SDK sudah dimuat
+    if (typeof window.googleGenai === 'undefined' || !window.googleGenai.GoogleGenAI) {
+        chatStatus.textContent = "CRITICAL ERROR: GoogleGenAI SDK tidak ditemukan. Cek <script> tag di HTML.";
+        console.error("Gemini Load Error: window.googleGenai object is undefined. SDK not loaded.");
+        return;
+    }
+    
+    // Cek API Key
+    if (GEMINI_API_KEY === "GANTI_DENGAN_API_KEY_ANDA_DI_SINI") {
+        chatStatus.textContent = "ERROR: API Key Belum Dimasukkan. Silakan Ganti Placeholder.";
+        return;
+    }
+
+    try {
+        // Objek sudah dijamin ada karena sudah diperiksa di atas
+        const { GoogleGenAI } = window.googleGenai;
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+        // System Instruction untuk mengarahkan AI
+        const systemInstruction = `Anda adalah seorang Market Analyst AI yang berfokus pada analisis dampak peristiwa global terhadap pasar keuangan (terutama Gold, Forex, dan Index). Berikan jawaban yang ringkas, faktual, dan berfokus pada korelasi antara geopolitik, konflik, atau ekonomi (seperti data inflasi, suku bunga, NFP) dengan pergerakan harga komoditas atau mata uang. Gunakan bahasa Indonesia yang profesional.`;
+
+        const chat = ai.chats.create({
+            model: "gemini-2.5-flash",
+            config: {
+                systemInstruction: systemInstruction,
+                temperature: 0.3 
+            }
+        });
+
+        // Tampilan inisialisasi berhasil
+        chatOutput.innerHTML = `<div class="gemini-message">Selamat datang di Market AI. Saya siap membantu menganalisis dampak geopolitik dan ekonomi pada pasar. Silakan tanyakan, misalnya: "Bagaimana krisis di Timur Tengah memengaruhi harga Emas saat ini?"</div>`;
+        chatInput.disabled = false;
+        chatSendBtn.disabled = false;
+        chatStatus.textContent = "AI Ready (Online)";
+
+        // Kirim pesan
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message === '') return;
+
+            // Tampilkan pesan pengguna
+            chatOutput.innerHTML += `<div class="message user-message">Anda: ${message}</div>`;
+            chatInput.value = '';
+            chatOutput.scrollTop = chatOutput.scrollHeight; 
+            
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            chatStatus.textContent = "AI Processing...";
 
             try {
-                const { GoogleGenAI } = window.googleGenai;
-                const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+                // Kirim ke Gemini
+                const response = await chat.sendMessage({ message: message });
 
-                // System Instruction untuk mengarahkan AI
-                const systemInstruction = `Anda adalah seorang Market Analyst AI yang berfokus pada analisis dampak peristiwa global terhadap pasar keuangan (terutama Gold, Forex, dan Index). Berikan jawaban yang ringkas, faktual, dan berfokus pada korelasi antara geopolitik, konflik, atau ekonomi (seperti data inflasi, suku bunga, NFP) dengan pergerakan harga komoditas atau mata uang. Gunakan bahasa Indonesia yang profesional.`;
-
-                const chat = ai.chats.create({
-                    model: "gemini-2.5-flash",
-                    config: {
-                        systemInstruction: systemInstruction,
-                        temperature: 0.3 // Rendahkan suhu untuk jawaban yang lebih faktual dan tidak spekulatif
-                    }
-                });
-
-                // Tampilan inisialisasi berhasil
-                chatOutput.innerHTML = `<div class="gemini-message">Selamat datang di Market AI. Saya siap membantu menganalisis dampak geopolitik dan ekonomi pada pasar. Silakan tanyakan, misalnya: "Bagaimana krisis di Timur Tengah memengaruhi harga Emas saat ini?"</div>`;
+                // Tampilkan pesan Gemini
+                const geminiText = response.text;
+                chatOutput.innerHTML += `<div class="message gemini-message">Gemini: ${geminiText}</div>`;
+                
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                chatOutput.innerHTML += `<div class="message gemini-message" style="border-left-color: #ff6347; color: #ff6347;">ERROR: Gagal terhubung ke AI. Cek konsol atau status API Key.</div>`;
+            } finally {
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
                 chatStatus.textContent = "AI Ready (Online)";
-
-                // Kirim pesan
-                async function sendMessage() {
-                    const message = chatInput.value.trim();
-                    if (message === '') return;
-
-                    // Tampilkan pesan pengguna
-                    chatOutput.innerHTML += `<div class="message user-message">Anda: ${message}</div>`;
-                    chatInput.value = '';
-                    chatOutput.scrollTop = chatOutput.scrollHeight; 
-                    
-                    chatInput.disabled = true;
-                    chatSendBtn.disabled = true;
-                    chatStatus.textContent = "AI Processing...";
-
-                    try {
-                        // Kirim ke Gemini
-                        const response = await chat.sendMessage({ message: message });
-
-                        // Tampilkan pesan Gemini
-                        const geminiText = response.text;
-                        chatOutput.innerHTML += `<div class="message gemini-message">Gemini: ${geminiText}</div>`;
-                        
-                    } catch (error) {
-                        console.error("Gemini API Error:", error);
-                        chatOutput.innerHTML += `<div class="message gemini-message" style="border-left-color: #ff6347; color: #ff6347;">ERROR: Gagal terhubung ke AI. Cek konsol atau API Key.</div>`;
-                    } finally {
-                        chatInput.disabled = false;
-                        chatSendBtn.disabled = false;
-                        chatStatus.textContent = "AI Ready (Online)";
-                        chatOutput.scrollTop = chatOutput.scrollHeight; 
-                        chatInput.focus();
-                    }
-                }
-
-                // Event Listeners
-                chatSendBtn.addEventListener('click', sendMessage);
-                chatInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        sendMessage();
-                    }
-                });
-
-            } catch (error) {
-                console.error("Gemini Initialization Error:", error);
-                chatStatus.textContent = "CRITICAL ERROR: Failed to load Google Gen AI SDK or init.";
+                chatOutput.scrollTop = chatOutput.scrollHeight; 
+                chatInput.focus();
             }
         }
-        
+
+        // Event Listeners
+        chatSendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+    } catch (error) {
+        // Catch ini hanya akan menangkap error yang terjadi SETELAH SDK dimuat (misalnya API Key invalid atau koneksi terputus).
+        console.error("Gemini Initialization Error:", error);
+        chatStatus.textContent = "CRITICAL ERROR: Failed to establish API connection.";
+    }
+}
 
 
         // Panggil semua fungsi setelah halaman dimuat
