@@ -1,6 +1,8 @@
-// --- 0. SIMULASI ENVIRONMENT VARIABLE ---
-// GANTI DENGAN KUNCI API ANDA UNTUK MENGAKTIFKAN CHAT
-const GEMINI_API_KEY = "AIzaSyBD22OZdh4V0ypkIj2DfG1wHcY_6KYLcCU 
+// --- 0. SIMULASI ENVIRONMENT VARIABLE (TIDAK AMAN UNTUK PRODUKSI) ---
+// Ganti nilai ini dengan API Key Gemini Anda.
+// PENTING: Karena ini adalah frontend JS, kunci ini terekspos. 
+// Untuk keamanan, gunakan fungsi serverless.
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
 
 // --- 1. DATA HISTORIS XAU/USD ---
 const rawData = [
@@ -45,6 +47,7 @@ const MAX_RETRIES = 3;
 
 const xauUsdDataString = JSON.stringify({ rawData, priceData }, null, 2);
 
+// NOTE: systemInstruction diubah menjadi object literal, BUKAN bagian dari "config"
 const SYSTEM_INSTRUCTION = {
     parts: [{
         text: `
@@ -77,10 +80,6 @@ const elements = {
     chatContainer: document.getElementById('chat-container'),
     dataColumn: document.getElementById('data-column'),
     mainContent: document.getElementById('main-content'),
-    apiKeyWarning: document.getElementById('api-key-warning'),
-    tableSearchInput: document.getElementById('tableSearchInput'),
-    headerMonth: document.getElementById('headerMonth'),
-    headerTrend: document.getElementById('headerTrend'),
 };
 
 let messages = [];
@@ -88,9 +87,6 @@ let state = {
     isLoading: false,
     isTableVisible: false,
     isChatMaximized: false,
-    tableSortKey: 'monthYear', 
-    tableSortDir: 'asc',       
-    currentTableData: [...rawData] 
 };
 
 // --- 3. FUNGSI UTILITAS UI ---
@@ -108,7 +104,7 @@ const scrollToBottom = () => {
 const showLoadingIndicator = () => {
     const loadingHtml = `
         <div id="loading-indicator" class="flex justify-start">
-            <div class="bg-gray-800 text-green-500 p-3 rounded-tr-xl rounded-b-xl shadow-md flex items-center mb-4 border border-green-900 animate-pulse">
+            <div class="bg-gray-800 text-green-500 p-3 rounded-tr-xl rounded-b-xl shadow-md flex items-center mb-4 border border-green-900">
                 <i data-lucide="loader-2" class="animate-spin w-4 h-4 mr-2"></i>
                 ANALYZING DATA...
             </div>
@@ -127,30 +123,27 @@ const hideLoadingIndicator = () => {
 };
 
 const showError = (message) => {
-    elements.errorMessage.querySelector('span').textContent = message;
+    elements.errorMessage.querySelector('p').textContent = message;
     elements.errorMessage.classList.remove('hidden');
-    elements.errorMessage.classList.add('animate-shake');
-    updateLucideIcons();
 };
 
 const hideError = () => {
     elements.errorMessage.classList.add('hidden');
-    elements.errorMessage.classList.remove('animate-shake');
 };
 
 const createMessageBubble = (role, text) => {
     const isUser = role === 'user';
-    const bgColor = isUser ? 'bg-green-700 text-white' : 'bg-gray-800 text-green-300 border border-green-700/50 shadow-green-950/20';
+    const bgColor = isUser ? 'bg-green-700 text-white' : 'bg-gray-800 text-green-400 border border-green-900';
     const alignment = isUser ? 'justify-end' : 'justify-start';
-    const borderRadius = isUser ? 'rounded-xl rounded-tr-sm' : 'rounded-xl rounded-tl-sm';
+    const borderRadius = isUser ? 'rounded-tl-xl rounded-b-xl' : 'rounded-tr-xl rounded-b-xl';
 
     const bubbleHtml = `
-        <div class="flex w-full ${alignment} transition-opacity duration-300 opacity-0" onload="this.classList.remove('opacity-0')">
+        <div class="flex w-full ${alignment}">
             <div 
-                class="max-w-xs sm:max-w-lg p-3 sm:p-4 mb-4 ${bgColor} ${borderRadius} shadow-xl"
+                class="max-w-xs sm:max-w-lg p-3 sm:p-4 mb-4 ${bgColor} ${borderRadius} transition-all duration-300 shadow-xl shadow-black/50"
                 style="white-space: pre-wrap; font-family: inherit;"
             >
-                <p class="font-bold text-xs mb-1 ${isUser ? 'text-green-200' : 'text-yellow-400'}">${isUser ? 'USER >' : 'ANALYST >'}</p>
+                <p class="font-bold text-sm mb-1">${isUser ? 'USER >' : 'ANALYST >'}</p>
                 ${text}
             </div>
         </div>
@@ -161,131 +154,53 @@ const createMessageBubble = (role, text) => {
     }
 
     elements.messagesContainer.insertAdjacentHTML('beforeend', bubbleHtml);
-    setTimeout(() => {
-        const lastBubble = elements.messagesContainer.lastElementChild;
-        if (lastBubble) lastBubble.classList.remove('opacity-0');
-    }, 10);
-    
     scrollToBottom();
 };
 
-// --- 4. DATA TABLE LOGIC (FIXED) ---
-
-const renderHistoricalData = (dataToRender) => {
-    const data = dataToRender || state.currentTableData;
-
-    const html = data.map((item, index) => {
-        const rowClass = index % 2 === 0 ? 'bg-gray-900 hover:bg-gray-800' : 'bg-gray-950 hover:bg-gray-800';
+const renderHistoricalData = () => {
+    const html = rawData.map((item, index) => {
+        const rowClass = index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900';
         let trendClass = 'text-blue-400';
         if (item.trend.includes('Uptrend')) {
-            trendClass = 'text-green-400 font-bold';
+            trendClass = 'text-green-500';
         } else if (item.trend.includes('Downtrend')) {
-            trendClass = 'text-red-400 font-bold';
+            trendClass = 'text-red-500';
         }
 
         return `
-            <tr class="${rowClass} transition-colors duration-150">
+            <tr class="${rowClass} hover:bg-green-950 transition-colors duration-150">
                 <td class="p-2 text-green-300">${item.monthYear}</td>
                 <td class="p-2 ${trendClass}">${item.trend}</td>
-                <td class="p-2 text-gray-400 text-xs">${item.factor}</td>
+                <td class="p-2 text-gray-300 text-xs">${item.factor}</td>
             </tr>
         `;
     }).join('');
 
     elements.dataTableBody.innerHTML = html;
-    updateSortIcons();
     updateLucideIcons(); 
 };
 
-const filterTable = () => {
-    const query = elements.tableSearchInput.value.toLowerCase();
-    
-    const filteredData = rawData.filter(item => 
-        item.monthYear.toLowerCase().includes(query) ||
-        item.trend.toLowerCase().includes(query) ||
-        item.factor.toLowerCase().includes(query)
-    );
-    
-    sortAndRenderTable(filteredData); 
-};
-
-const sortAndRenderTable = (dataToProcess) => {
-    const { tableSortKey, tableSortDir } = state;
-    
-    const sortedData = [...dataToProcess].sort((a, b) => {
-        const aVal = a[tableSortKey];
-        const bVal = b[tableSortKey];
-
-        if (aVal < bVal) return tableSortDir === 'asc' ? -1 : 1;
-        if (aVal > bVal) return tableSortDir === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    state.currentTableData = sortedData;
-    
-    renderHistoricalData(sortedData);
-};
-
-const handleSortClick = (key) => {
-    if (state.tableSortKey === key) {
-        state.tableSortDir = state.tableSortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-        state.tableSortKey = key;
-        state.tableSortDir = 'asc';
-    }
-    
-    filterTable(); 
-};
-
-const updateSortIcons = () => {
-    const headers = {
-        'monthYear': elements.headerMonth,
-        'trend': elements.headerTrend,
-    };
-
-    Object.values(headers).forEach(header => {
-        const icon = header.querySelector('i');
-        if (icon) icon.setAttribute('data-lucide', 'chevrons-up-down');
-    });
-
-    const activeHeader = headers[state.tableSortKey];
-    if (activeHeader) {
-        const icon = activeHeader.querySelector('i');
-        if (icon) {
-            const iconName = state.tableSortDir === 'asc' ? 'chevron-up' : 'chevron-down';
-            icon.setAttribute('data-lucide', iconName);
-        }
-    }
-    updateLucideIcons();
-};
-
-
-// --- 5. FUNGSI LOGIKA STATE ---
+// --- 4. FUNGSI LOGIKA STATE ---
 
 const updateFormState = () => {
     const inputFilled = elements.chatInput.value.trim().length > 0;
+    
+    // Periksa apakah API Key diisi (simulasi "Environment Variable" ada)
     const apiKeyPresent = GEMINI_API_KEY && GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE";
     
     elements.chatInput.disabled = state.isLoading || !apiKeyPresent;
     elements.sendBtn.disabled = state.isLoading || !inputFilled || !apiKeyPresent;
 
     if (!apiKeyPresent) {
-         elements.apiKeyWarning.classList.remove('hidden');
-         elements.initialMessage.style.display = 'none';
-         elements.chatInput.placeholder = "API KEY BELUM DISET DI app.js";
          elements.sendBtn.title = "Harap masukkan GEMINI_API_KEY di file app.js";
-    } else {
-         elements.apiKeyWarning.classList.add('hidden');
-         if (messages.length === 0) {
-             elements.initialMessage.style.display = 'flex';
-         }
-         elements.chatInput.placeholder = "ASK XAU/USD ANALYST...";
-    }
-
-    if (state.isLoading) {
+         elements.chatInput.placeholder = "API KEY BELUM DISET...";
+    } else if (state.isLoading) {
          elements.sendBtn.title = "Sedang menganalisis...";
     } else if (!inputFilled) {
          elements.sendBtn.title = "Ketik pesan untuk mengirim";
+    } else {
+         elements.sendBtn.title = "Kirim Pesan";
+         elements.chatInput.placeholder = "ASK XAU/USD ANALYST...";
     }
 };
 
@@ -295,20 +210,15 @@ const toggleTableVisibility = () => {
     if (state.isTableVisible) {
         elements.historicalDataTable.classList.remove('hidden');
         elements.dataPlaceholder.classList.add('hidden');
-        elements.toggleTableBtn.innerHTML = '<i data-lucide="eye-off" class="inline w-4 h-4 mr-2"></i> Sembunyikan Data Historis';
+        elements.toggleTableBtn.innerHTML = '<i data-lucide="minimize-2" class="inline w-4 h-4 mr-2"></i> Sembunyikan Data Historis';
         elements.toggleTableBtn.classList.replace('bg-green-700', 'bg-red-700');
         elements.toggleTableBtn.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
-        elements.toggleTableBtn.classList.add('shadow-red-900/50');
-        elements.toggleTableBtn.classList.remove('shadow-green-900/50');
-
     } else {
         elements.historicalDataTable.classList.add('hidden');
         elements.dataPlaceholder.classList.remove('hidden');
-        elements.toggleTableBtn.innerHTML = '<i data-lucide="eye" class="inline w-4 h-4 mr-2"></i> Tampilkan Data Historis';
+        elements.toggleTableBtn.innerHTML = '<i data-lucide="maximize-2" class="inline w-4 h-4 mr-2"></i> Tampilkan Data Historis';
         elements.toggleTableBtn.classList.replace('bg-red-700', 'bg-green-700');
         elements.toggleTableBtn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
-        elements.toggleTableBtn.classList.remove('shadow-red-900/50');
-        elements.toggleTableBtn.classList.add('shadow-green-900/50');
     }
     updateLucideIcons();
 };
@@ -319,14 +229,14 @@ const toggleChatMaximize = () => {
     if (state.isChatMaximized) {
         elements.mainContent.classList.replace('lg:grid-cols-3', 'grid-cols-1');
         elements.chatContainer.classList.replace('lg:col-span-2', 'lg:col-span-3');
-        elements.chatContainer.classList.replace('h-[80vh]', 'h-[90vh]');
+        elements.chatContainer.classList.replace('h-[80vh]', 'h-[85vh]');
         elements.dataColumn.classList.add('hidden'); 
         elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'minimize-2');
         elements.maximizeChatBtn.title = 'Perkecil Tampilan';
     } else {
         elements.mainContent.classList.replace('grid-cols-1', 'lg:grid-cols-3');
         elements.chatContainer.classList.replace('lg:col-span-3', 'lg:col-span-2');
-        elements.chatContainer.classList.replace('h-[90vh]', 'h-[80vh]');
+        elements.chatContainer.classList.replace('h-[85vh]', 'h-[80vh]');
         elements.dataColumn.classList.remove('hidden'); 
         elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'maximize-2');
         elements.maximizeChatBtn.title = 'Perbesar Chat';
@@ -336,14 +246,19 @@ const toggleChatMaximize = () => {
 };
 
 
-// --- 6. FUNGSI API & HANDLER UTAMA ---
+// --- 5. FUNGSI API & HANDLER UTAMA ---
 
+/** * Memanggil API Gemini dengan Exponential Backoff.
+ * Perbaikan utama: systemInstruction TIDAK dimasukkan dalam objek 'config'
+ * untuk model preview yang digunakan.
+ */
 const callGeminiApi = async (contents, retryCount = 0) => {
     try {
         const apiUrl = `${GEMINI_API_BASE_URL}?key=${GEMINI_API_KEY}`;
         
         const payload = {
             contents: contents,
+            // Perbaikan: systemInstruction ditempatkan di root object (bukan di config)
             systemInstruction: SYSTEM_INSTRUCTION, 
         };
 
@@ -383,29 +298,27 @@ const callGeminiApi = async (contents, retryCount = 0) => {
         state.isLoading = false;
         hideLoadingIndicator();
         updateFormState();
-        elements.chatInput.focus();
     }
 };
 
+/** Handler untuk pengiriman pesan */
 const sendMessage = async (e) => {
     e.preventDefault();
     const userMessage = elements.chatInput.value.trim();
 
-    if (!userMessage || state.isLoading || !GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-        if (!userMessage) elements.chatInput.focus();
-        updateFormState();
+    if (!userMessage || state.isLoading || !GEMINI_API_KEY) return;
+    if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+        showError("Harap ganti 'YOUR_GEMINI_API_KEY_HERE' di file app.js dengan API Key Anda.");
         return;
     }
 
+    elements.chatInput.value = '';
     hideError();
     state.isLoading = true;
     updateFormState();
     
-    // FIX: Pastikan bubble chat user dirender sebelum input dikosongkan
     messages.push({ role: 'user', text: userMessage });
     createMessageBubble('user', userMessage);
-    elements.chatInput.value = ''; // Kosongkan input setelah pesan dirender
-
     showLoadingIndicator();
 
     const apiContents = messages.map(msg => ({
@@ -413,14 +326,15 @@ const sendMessage = async (e) => {
         parts: [{ text: msg.text }],
     }));
 
+    // Panggil API tanpa perlu meneruskan API Key sebagai argumen
     await callGeminiApi(apiContents);
 };
 
-// --- 7. INISIALISASI ---
+// --- 6. INISIALISASI ---
 
 const initialize = () => {
-    // 1. Render data tabel awal (sudah di sort default)
-    sortAndRenderTable(rawData); 
+    // 1. Render data tabel
+    renderHistoricalData();
     
     // 2. Setup Event Listeners
     elements.chatForm.addEventListener('submit', sendMessage);
@@ -428,18 +342,9 @@ const initialize = () => {
     elements.toggleTableBtn.addEventListener('click', toggleTableVisibility);
     elements.maximizeChatBtn.addEventListener('click', toggleChatMaximize);
     
-    // Listeners untuk fitur Sort Table
-    elements.headerMonth.addEventListener('click', () => handleSortClick('monthYear'));
-    elements.headerTrend.addEventListener('click', () => handleSortClick('trend'));
-
-    // Listener untuk fitur Search Table
-    elements.tableSearchInput.addEventListener('input', filterTable);
-    
-    // 3. Update status form awal
+    // 3. Update status form awal (diperlukan untuk menonaktifkan jika API Key hilang)
     updateFormState(); 
-    
-    // 4. Fokuskan input chat saat inisialisasi
-    elements.chatInput.focus();
 };
 
+// Jalankan inisialisasi setelah DOM dimuat
 document.addEventListener('DOMContentLoaded', initialize);
