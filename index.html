@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAU/USD AI Analyst Chat - Vanilla JS</title>
+    <title>XAU/USD AI Analyst Chat - Vanilla JS (Revisi)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        import { createIcons, icons } from 'https://unpkg.com/lucide@latest';
-        window.lucide = { createIcons, icons };
+        // Import Lucide Icons (sebagai modul)
+        import { createIcons } from 'https://unpkg.com/lucide@latest';
+        
+        // Simpan fungsi createIcons di window agar dapat diakses oleh script utama
+        window.lucideCreateIcons = createIcons;
+        
+        // Panggil setelah DOM dimuat, memastikan semua tag <i data-lucide> sudah ada
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucideCreateIcons) {
+                window.lucideCreateIcons();
+            }
+        });
     </script>
     <style>
         /* Menggunakan font monospasi untuk nuansa terminal */
@@ -32,11 +42,16 @@
         #app-container {
             background-image: radial-gradient(circle at 50% 10%, rgba(0,255,65,0.1), rgba(0,0,0,0) 50%);
         }
+
+        /* Kelas Transisi untuk Maximize */
+        .transition-layout {
+            transition: grid-template-columns 300ms, height 300ms;
+        }
     </style>
 </head>
 <body class="min-h-screen">
 
-<div id="app-container" class="min-h-screen flex flex-col p-4 sm:p-8 transition-all duration-300">
+<div id="app-container" class="min-h-screen flex flex-col p-4 sm:p-8">
     
     <header class="w-full max-w-7xl mx-auto mb-6">
         <h1 class="text-3xl font-extrabold text-yellow-400 text-center mb-1 drop-shadow-[0_0_10px_rgba(255,193,7,0.5)]">
@@ -47,7 +62,7 @@
         </p>
         <div class="w-full max-w-xl mx-auto bg-gray-900 p-3 rounded-xl shadow-lg border border-green-900">
             <label for="apiKeyInput" class="block text-xs font-medium text-green-400 mb-1">
-                <i data-lucide="key-round" class="inline w-3 h-3 mr-1"></i> API Key (Isi Manual):
+                <i data-lucide="key-round" class="inline w-3 h-3 mr-1"></i> API Key Gemini:
             </label>
             <input
                 id="apiKeyInput"
@@ -59,9 +74,9 @@
         </div>
     </header>
     
-    <main id="main-content" class="flex-grow w-full max-w-7xl mx-auto grid transition-all duration-300 lg:grid-cols-3 gap-6">
+    <main id="main-content" class="flex-grow w-full max-w-7xl mx-auto grid lg:grid-cols-3 gap-6 transition-layout">
         
-        <div id="chat-container" class="lg:col-span-2 bg-gray-900 border border-green-900 rounded-xl shadow-2xl flex flex-col overflow-hidden h-[80vh]">
+        <div id="chat-container" class="lg:col-span-2 bg-gray-900 border border-green-900 rounded-xl shadow-2xl flex flex-col overflow-hidden h-[80vh] transition-all duration-300">
             <div class="flex justify-between items-center p-4 border-b border-green-800 bg-gray-800">
                 <h2 class="text-xl font-bold text-green-400 flex items-center">
                     <i data-lucide="message-square" class="w-5 h-5 mr-2"></i> Gemini Analysis Console
@@ -107,7 +122,7 @@
             </form>
         </div>
 
-        <div id="data-column" class="lg:col-span-1 flex flex-col space-y-4 h-[80vh]">
+        <div id="data-column" class="lg:col-span-1 flex flex-col space-y-4 h-[80vh] transition-all duration-300">
             
             <button
                 id="toggleTableBtn"
@@ -145,7 +160,7 @@
 </div>
 
 <script>
-    // --- 1. DATA HISTORIS XAU/USD (Sama seperti data asli) ---
+    // --- 1. DATA HISTORIS XAU/USD ---
     const rawData = [
         { monthYear: "Jan 2020", trend: "Uptrend (>+2%)", desc: "Ketegangan AS-Iran memicu Safe Haven. Bullish start.", factor: "AS-Iran Tension, Fed Rate Hold" },
         { monthYear: "Feb 2020", trend: "Ranging", desc: "Kekuatan Dolar AS membatasi kenaikan. Aksi jual ringan di akhir bulan.", factor: "Strong USD, Pre-COVID uncertainty" },
@@ -219,19 +234,24 @@ Contoh pertanyaan yang harus Anda jawab:
         dataPlaceholder: document.getElementById('data-placeholder'),
         maximizeChatBtn: document.getElementById('maximizeChatBtn'),
         chatContainer: document.getElementById('chat-container'),
+        dataColumn: document.getElementById('data-column'),
         mainContent: document.getElementById('main-content'),
     };
 
     let messages = [];
-    let isLoading = false;
-    let isTableVisible = false;
-    let isChatMaximized = false;
+    let state = {
+        isLoading: false,
+        isTableVisible: false,
+        isChatMaximized: false,
+    };
 
     // --- 3. FUNGSI UTILITAS UI ---
 
-    /** Menambah ikon Lucide ke elemen yang baru dimuat */
-    const renderLucideIcons = () => {
-        window.lucide.createIcons();
+    /** Memperbarui ikon Lucide */
+    const updateLucideIcons = () => {
+        if (window.lucideCreateIcons) {
+            window.lucideCreateIcons();
+        }
     };
 
     /** Menggulir ke bawah kontainer pesan */
@@ -250,7 +270,7 @@ Contoh pertanyaan yang harus Anda jawab:
             </div>
         `;
         elements.messagesContainer.insertAdjacentHTML('beforeend', loadingHtml);
-        renderLucideIcons();
+        updateLucideIcons();
         scrollToBottom();
     };
 
@@ -292,7 +312,11 @@ Contoh pertanyaan yang harus Anda jawab:
             </div>
         `;
         
-        if (elements.initialMessage) elements.initialMessage.remove(); // Hapus pesan awal
+        // Hapus pesan awal jika ada
+        if (elements.initialMessage) {
+            elements.initialMessage.style.display = 'none';
+        }
+
         elements.messagesContainer.insertAdjacentHTML('beforeend', bubbleHtml);
         scrollToBottom();
     };
@@ -318,9 +342,75 @@ Contoh pertanyaan yang harus Anda jawab:
         }).join('');
 
         elements.dataTableBody.innerHTML = html;
+        updateLucideIcons(); // Perlu memperbarui ikon di dalam tabel
     };
 
-    // --- 4. FUNGSI API & LOGIKA UTAMA ---
+    // --- 4. FUNGSI LOGIKA STATE ---
+
+    /** Memperbarui status input dan tombol Kirim */
+    const updateFormState = () => {
+        const apiKey = elements.apiKeyInput.value.trim();
+        const inputFilled = elements.chatInput.value.trim().length > 0;
+        
+        elements.chatInput.disabled = state.isLoading || !apiKey;
+        elements.sendBtn.disabled = state.isLoading || !apiKey || !inputFilled;
+
+        if (!apiKey) {
+             elements.sendBtn.title = "Masukkan API Key terlebih dahulu";
+        } else if (state.isLoading) {
+             elements.sendBtn.title = "Sedang menganalisis...";
+        } else if (!inputFilled) {
+             elements.sendBtn.title = "Ketik pesan untuk mengirim";
+        } else {
+             elements.sendBtn.title = "Kirim Pesan";
+        }
+    };
+    
+    /** Toggle visibilitas tabel data historis */
+    const toggleTableVisibility = () => {
+        state.isTableVisible = !state.isTableVisible;
+        
+        if (state.isTableVisible) {
+            elements.historicalDataTable.classList.remove('hidden');
+            elements.dataPlaceholder.classList.add('hidden');
+            elements.toggleTableBtn.innerHTML = '<i data-lucide="minimize-2" class="inline w-4 h-4 mr-2"></i> Sembunyikan Data Historis';
+            elements.toggleTableBtn.classList.replace('bg-green-700', 'bg-red-700');
+            elements.toggleTableBtn.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
+        } else {
+            elements.historicalDataTable.classList.add('hidden');
+            elements.dataPlaceholder.classList.remove('hidden');
+            elements.toggleTableBtn.innerHTML = '<i data-lucide="maximize-2" class="inline w-4 h-4 mr-2"></i> Tampilkan Data Historis';
+            elements.toggleTableBtn.classList.replace('bg-red-700', 'bg-green-700');
+            elements.toggleTableBtn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
+        }
+        updateLucideIcons();
+    };
+
+    /** Toggle mode Chat Maximized */
+    const toggleChatMaximize = () => {
+        state.isChatMaximized = !state.isChatMaximized;
+        
+        if (state.isChatMaximized) {
+            elements.mainContent.classList.replace('lg:grid-cols-3', 'grid-cols-1');
+            elements.chatContainer.classList.replace('lg:col-span-2', 'lg:col-span-3');
+            elements.chatContainer.classList.replace('h-[80vh]', 'h-[85vh]');
+            elements.dataColumn.classList.add('hidden'); 
+            elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'minimize-2');
+            elements.maximizeChatBtn.title = 'Perkecil Tampilan';
+        } else {
+            elements.mainContent.classList.replace('grid-cols-1', 'lg:grid-cols-3');
+            elements.chatContainer.classList.replace('lg:col-span-3', 'lg:col-span-2');
+            elements.chatContainer.classList.replace('h-[85vh]', 'h-[80vh]');
+            elements.dataColumn.classList.remove('hidden'); 
+            elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'maximize-2');
+            elements.maximizeChatBtn.title = 'Perbesar Chat';
+        }
+        updateLucideIcons();
+        scrollToBottom();
+    };
+
+
+    // --- 5. FUNGSI API & HANDLER UTAMA ---
 
     /** Memanggil API Gemini dengan Exponential Backoff */
     const callGeminiApi = async (contents, apiKey, retryCount = 0) => {
@@ -345,13 +435,13 @@ Contoh pertanyaan yang harus Anda jawab:
             if (!response.ok) {
                 if (response.status === 429 && retryCount < MAX_RETRIES) {
                     const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
-                    console.log(`Rate limit (429). Mencoba ulang dalam ${delay.toFixed(0)}ms...`);
+                    console.warn(`Rate limit (429). Retrying in ${delay.toFixed(0)}ms...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return callGeminiApi(contents, apiKey, retryCount + 1);
                 }
                 
                 const errorData = await response.json();
-                throw new Error(`Gemini API Error: ${response.status} - ${errorData.error?.message || 'Gagal memanggil API.'}`);
+                throw new Error(`Gemini API Error: ${response.status} - ${errorData.error?.message || 'Failed to call API.'}`);
             }
 
             const result = await response.json();
@@ -361,7 +451,7 @@ Contoh pertanyaan yang harus Anda jawab:
                 throw new Error("Respon dari model kosong atau tidak terduga.");
             }
 
-            // Tambahkan pesan model ke riwayat
+            // Tambahkan pesan model ke riwayat dan tampilkan
             messages.push({ role: 'model', text: modelResponseText });
             createMessageBubble('model', modelResponseText);
             hideError();
@@ -370,26 +460,26 @@ Contoh pertanyaan yang harus Anda jawab:
             console.error("Kesalahan dalam pengiriman pesan:", err);
             showError(err.message);
         } finally {
-            isLoading = false;
+            state.isLoading = false;
             hideLoadingIndicator();
             updateFormState();
         }
     };
 
-    /** Mengirim pesan */
+    /** Handler untuk pengiriman pesan */
     const sendMessage = async (e) => {
         e.preventDefault();
         const apiKey = elements.apiKeyInput.value.trim();
         const userMessage = elements.chatInput.value.trim();
 
-        if (!userMessage || isLoading || !apiKey) return;
+        if (!userMessage || state.isLoading || !apiKey) return;
 
         elements.chatInput.value = '';
         hideError();
-        isLoading = true;
+        state.isLoading = true;
         updateFormState();
         
-        // Tambahkan pesan pengguna ke riwayat
+        // Tambahkan pesan pengguna ke riwayat dan tampilkan
         messages.push({ role: 'user', text: userMessage });
         createMessageBubble('user', userMessage);
         showLoadingIndicator();
@@ -403,93 +493,30 @@ Contoh pertanyaan yang harus Anda jawab:
         await callGeminiApi(apiContents, apiKey);
     };
 
-    // --- 5. FUNGSI PENANGAN EVENT UI ---
-
-    /** Memperbarui status input dan tombol Kirim */
-    const updateFormState = () => {
-        const apiKey = elements.apiKeyInput.value.trim();
-        const inputFilled = elements.chatInput.value.trim().length > 0;
-        
-        elements.chatInput.disabled = isLoading || !apiKey;
-        elements.sendBtn.disabled = isLoading || !apiKey || !inputFilled;
-
-        if (!apiKey) {
-             elements.sendBtn.title = "Masukkan API Key terlebih dahulu";
-        } else if (isLoading) {
-             elements.sendBtn.title = "Sedang menganalisis...";
-        } else if (!inputFilled) {
-             elements.sendBtn.title = "Ketik pesan untuk mengirim";
-        } else {
-             elements.sendBtn.title = "Kirim Pesan";
-        }
-    };
-
-    /** Toggle visibilitas tabel data historis */
-    const toggleTableVisibility = () => {
-        isTableVisible = !isTableVisible;
-        
-        if (isTableVisible) {
-            elements.historicalDataTable.classList.remove('hidden');
-            elements.dataPlaceholder.classList.add('hidden');
-            elements.toggleTableBtn.innerHTML = '<i data-lucide="minimize-2" class="inline w-4 h-4 mr-2"></i> Sembunyikan Data Historis';
-            elements.toggleTableBtn.classList.remove('bg-green-700', 'hover:bg-green-600', 'shadow-green-900/50');
-            elements.toggleTableBtn.classList.add('bg-red-700', 'hover:bg-red-600', 'shadow-red-900/50');
-        } else {
-            elements.historicalDataTable.classList.add('hidden');
-            elements.dataPlaceholder.classList.remove('hidden');
-            elements.toggleTableBtn.innerHTML = '<i data-lucide="maximize-2" class="inline w-4 h-4 mr-2"></i> Tampilkan Data Historis';
-            elements.toggleTableBtn.classList.remove('bg-red-700', 'hover:bg-red-600', 'shadow-red-900/50');
-            elements.toggleTableBtn.classList.add('bg-green-700', 'hover:bg-green-600', 'shadow-green-900/50');
-        }
-        renderLucideIcons();
-    };
-
-    /** Toggle mode Chat Maximized */
-    const toggleChatMaximize = () => {
-        isChatMaximized = !isChatMaximized;
-        
-        if (isChatMaximized) {
-            elements.mainContent.classList.remove('lg:grid-cols-3');
-            elements.mainContent.classList.add('grid-cols-1');
-            elements.chatContainer.classList.remove('lg:col-span-2', 'h-[80vh]');
-            elements.chatContainer.classList.add('lg:col-span-3', 'h-[85vh]');
-            elements.dataColumn.classList.add('hidden'); // Sembunyikan kolom data
-            elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'minimize-2');
-            elements.maximizeChatBtn.title = 'Perkecil Tampilan';
-        } else {
-            elements.mainContent.classList.remove('grid-cols-1');
-            elements.mainContent.classList.add('lg:grid-cols-3');
-            elements.chatContainer.classList.remove('lg:col-span-3', 'h-[85vh]');
-            elements.chatContainer.classList.add('lg:col-span-2', 'h-[80vh]');
-            elements.dataColumn.classList.remove('hidden'); // Tampilkan kolom data
-            elements.maximizeChatBtn.querySelector('i').setAttribute('data-lucide', 'maximize-2');
-            elements.maximizeChatBtn.title = 'Perbesar Chat';
-        }
-        renderLucideIcons();
-    };
-
-
     // --- 6. INISIALISASI ---
 
     const initialize = () => {
-        // Render data tabel saat startup
+        // 1. Render data tabel
         renderHistoricalData();
         
-        // Render Lucide Icons pertama kali
-        renderLucideIcons();
-
-        // Setup Event Listeners
+        // 2. Setup Event Listeners
         elements.chatForm.addEventListener('submit', sendMessage);
         elements.apiKeyInput.addEventListener('input', updateFormState);
         elements.chatInput.addEventListener('input', updateFormState);
         elements.toggleTableBtn.addEventListener('click', toggleTableVisibility);
         elements.maximizeChatBtn.addEventListener('click', toggleChatMaximize);
         
-        // Akses data-column untuk fungsionalitas maximize
-        elements.dataColumn = document.getElementById('data-column');
-
-        // Update status form awal
+        // 3. Update status form awal
         updateFormState(); 
+        
+        // 4. Aktifkan input setelah API Key diisi
+        elements.apiKeyInput.addEventListener('input', () => {
+            const apiKey = elements.apiKeyInput.value.trim();
+            elements.chatInput.disabled = !apiKey;
+            if (apiKey) {
+                elements.chatInput.focus();
+            }
+        });
     };
 
     // Jalankan inisialisasi setelah DOM dimuat
