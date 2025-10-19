@@ -9,9 +9,9 @@ const MAX_RETRIES = 3;
 const App = () => {
   // State untuk menyimpan API Key
   const [apiKey, setApiKey] = useState(
-    // Coba ambil dari localStorage, jika ada (untuk kenyamanan development)
-    localStorage.getItem('geminiApiKey') || '' 
-  );
+  // Ambil dari environment variable jika ada, atau dari localStorage
+  import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('geminiApiKey') || '' 
+);
   // State untuk menyimpan riwayat pesan
   const [messages, setMessages] = useState([]);
   // State untuk input pesan saat ini
